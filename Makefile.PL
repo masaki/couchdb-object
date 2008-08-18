@@ -5,7 +5,7 @@ all_from 'lib/CouchDB/Object.pm';
 requires 'Moose';
 requires 'MooseX::Types::URI';
 requires 'Class::Inspector';
-requires 'Data::Structure::Util';
+requires 'Exporter';
 requires 'Hash::AsObject';
 requires 'Hash::Merge';
 requires 'HTTP::Request::Common' => 5.814;

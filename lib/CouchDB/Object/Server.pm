@@ -3,12 +3,7 @@ package CouchDB::Object::Server;
 use Moose;
 use MooseX::Types::URI qw(Uri);
 use URI;
-use CouchDB::Object;
-use CouchDB::Object::Database;
 use CouchDB::Object::UserAgent;
-use CouchDB::Object::Utils qw(uri_for);
-
-our $VERSION = CouchDB::Object->VERSION;
 
 has 'uri' => (
     is       => 'ro',
@@ -26,6 +21,11 @@ has 'agent' => (
 );
 
 no Moose;
+use CouchDB::Object;
+use CouchDB::Object::Database;
+use CouchDB::Object::Utils qw(uri_for);
+
+our $VERSION = CouchDB::Object->VERSION;
 
 sub BUILD {
     my ($self, $args) = @_;
@@ -67,19 +67,15 @@ __PACKAGE__->meta->make_immutable;
 
 1;
 
-=encoding utf-8
-
-=for stopwords
-
 =head1 NAME
 
-CouchDB::Object::Server - CouchDB server class
+CouchDB::Object::Server - Interface to CouchDB server
 
 =head1 SYNOPSIS
 
   use CouchDB::Object::Server;
 
-  my $couch = CouchDB::Server->new(uri => 'http://localhost:5984');
+  my $couch = CouchDB::Object::Server->new(uri => 'http://localhost:5984');
 
   if ($couch->ping) {
       print "connect CouchDB";
@@ -98,6 +94,10 @@ Returns the CouchDB server object.
 
 Returns the CouchDB server uri as <URI> object.
 
+=head2 ping
+
+Returns true if a connection can be made to the server, false otherwise.
+
 =head2 db($dbname)
 
 Returns the L<CouchDB::Object::Database> object of that name.
@@ -112,7 +112,7 @@ Returns the L<CouchDB::Object::Response> object for server.
 
 =head2 replicate
 
-not implemented yet
+Not implemented yet.
 
 =head1 AUTHOR
 

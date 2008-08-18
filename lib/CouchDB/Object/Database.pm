@@ -2,11 +2,7 @@ package CouchDB::Object::Database;
 
 use Moose;
 use MooseX::Types::URI qw(Uri);
-use CouchDB::Object;
 use CouchDB::Object::UserAgent;
-use CouchDB::Object::Utils qw(uri_for);
-
-our $VERSION = CouchDB::Object->VERSION;
 
 has 'name' => (
     is       => 'ro',
@@ -27,6 +23,12 @@ has 'agent' => (
     required => 1,
     default  => sub { CouchDB::Object::UserAgent->new },
 );
+
+no Moose;
+use CouchDB::Object;
+use CouchDB::Object::Utils qw(uri_for);
+
+our $VERSION = CouchDB::Object->VERSION;
 
 sub BUILD {
     my ($self, $args) = @_;
@@ -101,15 +103,13 @@ sub view {
     # TODO: implements
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;
-
-=encoding utf-8
-
-=for stopwords
 
 =head1 NAME
 
-CouchDB::Object::Database - CouchDB database class
+CouchDB::Object::Database - Interface to CouchDB database
 
 =head1 SYNOPSIS
 

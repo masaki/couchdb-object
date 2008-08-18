@@ -9,15 +9,7 @@ our $VERSION = '0.01';
 
 =head1 NAME
 
-CouchDB::Object
-
-=head1 SYNOPSIS
-
-    use CouchDB::Object;
-
-=head1 DESCRIPTION
-
-CouchDB::Object is
+CouchDB::Object - Yet another CouchDB client
 
 =head1 AUTHOR
 
@@ -29,5 +21,7 @@ This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =head1 SEE ALSO
+
+L<CouchDB::Object::Server>, L<CouchDB::Object::Database>
 
 =cut

@@ -1,13 +1,7 @@
 package CouchDB::Object::Document;
 
 use Moose;
-use Data::Structure::Util qw(unbless);
 use Hash::AsObject;
-use Hash::Merge qw(merge);
-use JSON::XS ();
-use CouchDB::Object;
-
-our $VERSION = CouchDB::Object->VERSION;
 
 has 'id' => (
     is        => 'rw',
@@ -29,6 +23,11 @@ has 'value' => (
 );
 
 no Moose;
+use Hash::Merge ();
+use JSON::XS ();
+use CouchDB::Object;
+
+our $VERSION = CouchDB::Object->VERSION;
 
 sub new_from_json {
     my ($class, $json) = @_;
@@ -47,8 +46,8 @@ sub to_json {
     $hash->{_id}  = $self->id  if $self->has_id;
     $hash->{_rev} = $self->rev if $self->has_rev;
 
-    my $value = $self->value;
-    return JSON::XS->new->encode(merge({ %$value }, $hash));
+    $hash = Hash::Merge::merge({%{ $self->value }}, $hash);
+    return JSON::XS->new->encode($hash);
 }
 
 our $AUTOLOAD;
