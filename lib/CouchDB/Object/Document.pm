@@ -2,6 +2,9 @@ package CouchDB::Object::Document;
 
 use Moose;
 use Hash::AsObject;
+use Hash::Merge ();
+use JSON::XS ();
+use CouchDB::Object;
 
 has 'id' => (
     is        => 'rw',
@@ -23,9 +26,6 @@ has 'value' => (
 );
 
 no Moose;
-use Hash::Merge ();
-use JSON::XS ();
-use CouchDB::Object;
 
 our $VERSION = CouchDB::Object->VERSION;
 
@@ -62,3 +62,22 @@ sub DESTROY {}
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+=head1 NAME
+
+CouchDB::Object::Document - Interface to CouchDB document
+
+=head1 AUTHOR
+
+NAKAGAWA Masaki E<lt>masaki@cpan.orgE<gt>
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+L<CouchDB::Object::Database>
+
+=cut

@@ -3,7 +3,10 @@ package CouchDB::Object::Server;
 use Moose;
 use MooseX::Types::URI qw(Uri);
 use URI;
+use CouchDB::Object;
+use CouchDB::Object::Database;
 use CouchDB::Object::UserAgent;
+use CouchDB::Object::Utils qw(uri_for);
 
 has 'uri' => (
     is       => 'ro',
@@ -21,9 +24,6 @@ has 'agent' => (
 );
 
 no Moose;
-use CouchDB::Object;
-use CouchDB::Object::Database;
-use CouchDB::Object::Utils qw(uri_for);
 
 our $VERSION = CouchDB::Object->VERSION;
 

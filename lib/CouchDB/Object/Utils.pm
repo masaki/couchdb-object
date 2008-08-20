@@ -2,8 +2,8 @@ package CouchDB::Object::Utils;
 
 use strict;
 use warnings;
-use Class::Inspector;
 use Exporter qw(import);
+use Class::Inspector;
 use URI::Escape qw(uri_escape_utf8);
 use CouchDB::Object;
 
@@ -28,3 +28,22 @@ sub uri_for {
 }
 
 1;
+
+=head1 NAME
+
+CouchDB::Object::Utils
+
+=head1 METHODS
+
+=head2 uri_for
+
+=head1 AUTHOR
+
+NAKAGAWA Masaki E<lt>masaki@cpan.orgE<gt>
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

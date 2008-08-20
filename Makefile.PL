@@ -8,7 +8,7 @@ requires 'Class::Inspector';
 requires 'Exporter';
 requires 'Hash::AsObject';
 requires 'Hash::Merge';
-requires 'HTTP::Request::Common' => 5.814;
+requires 'HTTP::Request::Common' => 5.814; # for DELETE
 requires 'HTTP::Response';
 requires 'JSON::XS';
 requires 'LWP::UserAgent';

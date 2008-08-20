@@ -1,13 +1,13 @@
 package CouchDB::Object::UserAgent;
 
 use Moose;
+use HTTP::Request::Common 5.814 qw(PUT DELETE);
+use CouchDB::Object;
+use CouchDB::Object::Response;
 
 extends 'LWP::UserAgent';
 
 no Moose;
-use HTTP::Request::Common 5.814 qw(PUT DELETE);
-use CouchDB::Object;
-use CouchDB::Object::Response;
 
 our $VERSION = CouchDB::Object->VERSION;
 
@@ -44,3 +44,22 @@ sub delete {
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+=head1 NAME
+
+CouchDB::Object::UserAgent
+
+=head1 AUTHOR
+
+NAKAGAWA Masaki E<lt>masaki@cpan.orgE<gt>
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=head1 SEE ALSO
+
+L<CouchDB::Object::Response>
+
+=cut
