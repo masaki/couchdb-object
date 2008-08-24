@@ -3,6 +3,7 @@ name 'CouchDB-Object';
 all_from 'lib/CouchDB/Object.pm';
 
 requires 'Moose';
+requires 'MooseX::AttributeHelpers';
 requires 'MooseX::Types::URI';
 requires 'Class::Inspector';
 requires 'Exporter';

@@ -55,7 +55,8 @@ sub compact {
 }
 
 sub all_docs {
-    # TODO: implements
+    my ($self, $args) = @_;
+    return $self->agent->get($self->uri_for('_all_docs', $args));
 }
 
 sub open_doc {

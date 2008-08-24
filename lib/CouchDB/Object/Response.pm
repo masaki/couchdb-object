@@ -44,8 +44,8 @@ sub new_from_response {
     $content = JSON::XS->new->decode($res->content) if $res->content_type =~ /json/i;
 
     return $class->new(
-        http_response => $http_res,
-        uri           => $http_res->request->uri,
+        http_response => $res,
+        uri           => $res->request->uri,
         content       => Hash::AsObject->new($content),
     );
 }

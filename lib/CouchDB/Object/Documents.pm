@@ -1,22 +1,28 @@
 package CouchDB::Object::Documents;
 
 use Moose;
+use MooseX::AttributeHelpers;
 use CouchDB::Object;
 use CouchDB::Object::Document;
 
-has 'total_rows' => (
-    is => 'rw',
-    isa => 'Int',
+has 'total_docs' => (
+    is      => 'rw',
+    isa     => 'Int',
+    default => sub { 0 },
 );
 
 has 'offset' => (
-    is => 'rw',
-    isa => 'Int',
+    is      => 'rw',
+    isa     => 'Int',
+    default => sub { 0 },
 );
 
-has 'rows' => (
-    is => 'rw',
-    isa => 'ArrayRef',
+has 'docs' => (
+    metaclass  => 'Collection::List',
+    is         => 'rw',
+    isa        => 'ArrayRef[CouchDB::Object::Document]',
+    auto_deref => 1,
+    provides   => { count => 'count' },
 );
 
 no Moose;
@@ -26,14 +32,18 @@ our $VERSION = CouchDB::Object->VERSION;
 sub new_from_json {
     my ($class, $json) = @_;
 
-    my @docs = @{ $json->{rows} };
+    my @docs = grep { exists $_->{id} and exists $_->{value} } @{ $json->{rows} };
     for my $doc (@docs) {
-        my $id = $doc->{id};
+        my $id = delete $doc->{id};
         $doc = CouchDB::Object::Document->new_from_json($doc->{value});
-        $doc->id($id) if $id;
+        $doc->id($id) if defined $id;
     }
 
-    return $class->new(total_rows => $json->{total_rows}, offset => $json->{offset}, rows => \@docs);
+    return $class->new(
+        total_docs => $json->{total_rows},
+        offset     => $json->{offset},
+        docs       => \@docs,
+    );
 }
 
 __PACKAGE__->meta->make_immutable;

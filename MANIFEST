@@ -19,6 +19,7 @@ inc/Test/More.pm
 lib/CouchDB/Object.pm
 lib/CouchDB/Object/Database.pm
 lib/CouchDB/Object/Document.pm
+lib/CouchDB/Object/Documents.pm
 lib/CouchDB/Object/Response.pm
 lib/CouchDB/Object/Server.pm
 lib/CouchDB/Object/UserAgent.pm
@@ -31,4 +32,5 @@ t/00_compile.t
 t/01_server.t
 t/02_database.t
 t/03_document.t
+t/04_all_docs.t
 t/CouchDB.pm

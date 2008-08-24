@@ -36,7 +36,11 @@ sub new_from_json {
     my $rev   = delete $json->{_rev} || delete $json->{rev};
     my $value = Hash::AsObject->new($json);
 
-    return $class->new(id => $id, rev => $rev, value => $value);
+    my $self = $class->new(value => $value);
+    $self->id($id)   if defined $id;
+    $self->rev($rev) if defined $rev;
+
+    return $self;
 }
 
 sub to_json {
