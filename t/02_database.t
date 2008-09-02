@@ -1,24 +1,30 @@
 use strict;
 use t::CouchDB;
 
-my $server = server();
-my $couch  = CouchDB::Object::Server->new(uri => $server);
+my $couch = test_couch();
 
-plan skip_all => "Can't connect CouchDB server: $server" unless $couch->ping;
-plan tests => 7 if $couch->ping;
+unless ($couch->ping) {
+    plan skip_all => "Can't connect CouchDB server: " . test_server();
+}
+else {
+    plan tests => 7;
+}
 
-my $name = random_name();
-my $uri  = $server . $name;
-my $db   = $couch->db($name);
+my $server = test_server();
+my $name   = test_dbname();
 
-# info
-is $db->name => $name;
-is $db->uri  => $uri;
+my $uri = $server->clone;
+$uri->path_segments($name, '');
+
+my $db = CouchDB::Object::Database->new(name => $name, server => $server);
+
+is $db->uri => $uri;
 
 # create
 ok $db->info->is_error;     # 404
 ok $db->create->is_success; # 201
 ok $db->info->is_success;   # 200
+is $db->info->content->db_name => $name;
 
 # drop
 ok $db->drop->is_success; # 200

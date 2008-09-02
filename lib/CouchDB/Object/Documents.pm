@@ -2,7 +2,6 @@ package CouchDB::Object::Documents;
 
 use Moose;
 use MooseX::AttributeHelpers;
-use CouchDB::Object;
 use CouchDB::Object::Document;
 
 has 'total_docs' => (
@@ -27,7 +26,7 @@ has 'docs' => (
 
 no Moose;
 
-our $VERSION = CouchDB::Object->VERSION;
+our $VERSION = '0.01';
 
 sub new_from_json {
     my ($class, $json) = @_;
@@ -45,6 +44,8 @@ sub new_from_json {
         docs       => \@docs,
     );
 }
+
+sub all { shift->docs } # readonly
 
 __PACKAGE__->meta->make_immutable;
 

@@ -4,7 +4,6 @@ use Moose;
 use MooseX::Types::URI qw(Uri);
 use Hash::AsObject;
 use JSON::XS ();
-use CouchDB::Object;
 use CouchDB::Object::Document;
 use CouchDB::Object::Documents;
 
@@ -35,7 +34,7 @@ has 'content' => (
 
 no Moose;
 
-our $VERSION = CouchDB::Object->VERSION;
+our $VERSION = '0.01';
 
 sub new_from_response {
     my ($class, $res) = @_;

@@ -1,0 +1,7 @@
+[
+{ "id": "doc id 1", "title": "doc 1" },
+{ "id": "doc id 2", "title": "doc 2" },
+{ "id": "doc id 3", "title": "doc 3", "tags": ["aaa", "bbb", "ccc"] },
+{ "id": "doc id 4", "title": "doc 4", "foo": "bar" },
+{ "id": "doc id 5", "title": "doc 5" }
+]

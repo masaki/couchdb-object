@@ -4,7 +4,6 @@ use Moose;
 use Hash::AsObject;
 use Hash::Merge ();
 use JSON::XS ();
-use CouchDB::Object;
 
 has 'id' => (
     is        => 'rw',
@@ -27,7 +26,7 @@ has 'value' => (
 
 no Moose;
 
-our $VERSION = CouchDB::Object->VERSION;
+our $VERSION = '0.01';
 
 sub new_from_json {
     my ($class, $json) = @_;

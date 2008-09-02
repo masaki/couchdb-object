@@ -1,21 +1,52 @@
 package t::CouchDB;
 
+use strict;
 use Test::Base -Base;
-use String::Random;
-use CouchDB::Object::Server;
-use CouchDB::Object::Database;
+use JSON::XS ();
+use String::Random ();
+use URI;
+use CouchDB::Object;
 use CouchDB::Object::Document;
 
-our @EXPORT = qw(server random_name);
+our @EXPORT = qw(test_server test_dbname test_couch deploy_db);
 
-sub server {
-    my $server = $ENV{TEST_COUCHDB} || 'http://localhost:5984/';
-    $server =~ s{(?<!/)$}{/};
-    $server;
+sub test_server {
+    my $uri = URI->new($ENV{TEST_COUCHDB} || 'http://localhost:5984/');
+    $uri->path('/');
+    $uri;
 }
 
-sub random_name {
+sub test_dbname {
     String::Random->new->randregex('[a-z]{20}');
+}
+
+sub test_couch {
+    my $uri = test_server();
+    CouchDB::Object->new(scheme => $uri->scheme, host => $uri->host, port => $uri->port);
+}
+
+sub deploy_db {
+    my $couch = test_couch();
+    my $name  = test_dbname();
+
+    my $db = $couch->db($name);
+    $db->create;
+
+    my $data = do {
+        open my $fh, '<', 't/docs.json' or die $!;
+        local $/; <$fh>;
+    };
+    my $json = JSON::XS->new->decode($data);
+    for (@$json) {
+        my $doc = CouchDB::Object::Document->new;
+        $doc->id(delete $_->{id});
+        while (my ($key, $value) = each %$_) {
+            $doc->$key($value);
+        }
+        $db->save_doc($doc);
+    }
+
+    ($name, $db);
 }
 
 1;

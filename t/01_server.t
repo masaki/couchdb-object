@@ -1,18 +1,14 @@
 use strict;
 use t::CouchDB;
 
-my $server = server();
-my $couch  = CouchDB::Object::Server->new(uri => $server);
+my $couch = test_couch();
 
-plan skip_all => "Can't connect CouchDB server: $server" unless $couch->ping;
-plan tests => 3 if $couch->ping;
+unless ($couch->ping) {
+    plan skip_all => "Can't connect CouchDB server: " . test_server();
+}
+else {
+    plan tests => 2;
+}
 
-# server info
-is $couch->uri => $server;
-ok $couch->info->is_success;
-
-# replicate
-TODO: {
-    local $TODO = 'replicate(): not implemented yet';
-    ok $couch->replicate;
-};
+is $couch->uri => test_server();
+isa_ok $couch->db(test_dbname()) => 'CouchDB::Object::Database';
