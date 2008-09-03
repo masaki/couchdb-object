@@ -15,7 +15,7 @@ END { $db->drop if $couch->ping }
 
 for (1..5) {
     my $id = "doc id $_";
-    my $doc = $db->open_doc($id)->to_document;
+    my $doc = $db->open_doc($id)->content;
     ok $db->remove_doc($doc)->is_success; # 200
     ok $db->open_doc($id)->is_error;      # 404
 }

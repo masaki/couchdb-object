@@ -32,7 +32,7 @@ sub all_dbs {
     my ($self, $args) = @_;
 
     my $res = $self->request(GET => $self->uri_for('_all_dbs'));
-    return $self->ping ? map { $self->db($_) } @{ $res->parsed_content } : ();
+    return $self->ping ? map { $self->db($_) } @{ $res->content } : ();
 }
 
 sub info {

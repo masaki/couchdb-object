@@ -7,7 +7,7 @@ unless ($couch->ping) {
     plan skip_all => "Can't connect CouchDB server: " . test_server();
 }
 else {
-    plan tests => 10;
+    plan tests => 12;
 }
 
 my ($name, $db) = deploy_db();
@@ -17,7 +17,8 @@ END { $db->drop if $couch->ping }
 {
     my $res = $db->open_doc('doc id 4');
     ok $res->is_success; # 200
-    my $doc = $res->to_document;
+    my $doc = $res->content;
+    isa_ok $doc => 'CouchDB::Object::Document';
     is $doc->id => 'doc id 4';
     ok $doc->rev;
     is $doc->title => 'doc 4';
@@ -28,7 +29,8 @@ END { $db->drop if $couch->ping }
 {
     my $res = $db->open_doc('doc id 3');
     ok $res->is_success; # 200
-    my $doc = $res->to_document;
+    my $doc = $res->content;
+    isa_ok $doc => 'CouchDB::Object::Document';
     is $doc->id => 'doc id 3';
     ok $doc->rev;
     is $doc->title => 'doc 3';
