@@ -3,7 +3,7 @@ package CouchDB::Object::Document;
 use Moose;
 use Hash::AsObject;
 use Hash::Merge ();
-use JSON::XS ();
+use CouchDB::Object::JSON;
 
 has 'id' => (
     is        => 'rw',
@@ -17,7 +17,7 @@ has 'rev' => (
     predicate => 'has_rev',
 );
 
-has 'value' => (
+has '_fields' => (
     is      => 'ro',
     isa     => 'Hash::AsObject',
     # TODO: coerce
@@ -31,11 +31,10 @@ our $VERSION = '0.01';
 sub new_from_json {
     my ($class, $json) = @_;
 
-    my $id    = delete $json->{_id}  || delete $json->{id};
-    my $rev   = delete $json->{_rev} || delete $json->{rev};
-    my $value = Hash::AsObject->new($json);
+    my $id  = delete $json->{_id};
+    my $rev = delete $json->{_rev};
 
-    my $self = $class->new(value => $value);
+    my $self = $class->new(_fields => Hash::AsObject->new($json));
     $self->id($id)   if defined $id;
     $self->rev($rev) if defined $rev;
 
@@ -49,15 +48,15 @@ sub to_json {
     $hash->{_id}  = $self->id  if $self->has_id;
     $hash->{_rev} = $self->rev if $self->has_rev;
 
-    $hash = Hash::Merge::merge({%{ $self->value }}, $hash);
-    return JSON::XS->new->encode($hash);
+    $hash = Hash::Merge::merge({%{ $self->_fields }}, $hash);
+    return CouchDB::Object::JSON->encode($hash);
 }
 
 our $AUTOLOAD;
 sub AUTOLOAD {
     my $self = shift;
     my ($key) = $AUTOLOAD =~ /([^:]+)$/;
-    return $self->value->$key(@_);
+    return $self->_fields->$key(@_);
 }
 
 sub DESTROY {}

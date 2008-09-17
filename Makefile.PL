@@ -3,6 +3,7 @@ name 'CouchDB-Object';
 all_from 'lib/CouchDB/Object.pm';
 
 requires 'Moose';
+requires 'MooseX::Singleton';
 requires 'MooseX::Types::URI';
 requires 'Data::Dump::Streamer';
 requires 'Hash::AsObject';

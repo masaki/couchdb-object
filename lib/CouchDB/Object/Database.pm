@@ -4,8 +4,7 @@ use Moose;
 use MooseX::Types::URI qw(Uri);
 use Data::Dump::Streamer;
 use HTTP::Headers;
-use JSON::XS ();
-use URI::Escape qw(uri_escape_utf8);
+use CouchDB::Object::JSON;
 
 with 'CouchDB::Object::Role::Client';
 
@@ -74,8 +73,8 @@ sub save_doc {
     # merge
     if ($res->is_success) {
         my $content = $res->content;
-        $doc->id($content->id)   if $content->id;
-        $doc->rev($content->rev) if $content->rev;
+        $doc->id($content->{id})   if exists $content->{id};
+        $doc->rev($content->{rev}) if exists $content->{rev};
     }
 
     return $res;
@@ -102,7 +101,7 @@ sub query {
         map      => _code2str($map),
     };
     $body->{reduce} = _code2str($reduce) if defined $reduce;
-    $body = JSON::XS->new->encode($body);
+    $body = CouchDB::Object::JSON->encode($body);
 
     my $header = HTTP::Headers->new('Content-Type' => 'application/json');
     return $self->request(POST => $self->uri_for('_temp_view', $args), $header, $body);

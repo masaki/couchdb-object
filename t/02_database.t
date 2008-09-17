@@ -24,7 +24,7 @@ is $db->uri => $uri;
 ok $db->info->is_error;     # 404
 ok $db->create->is_success; # 201
 ok $db->info->is_success;   # 200
-is $db->info->content->db_name => $name;
+is $db->info->content->{db_name} => $name;
 
 # drop
 ok $db->drop->is_success; # 200

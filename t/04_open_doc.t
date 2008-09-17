@@ -17,10 +17,11 @@ END { $db->drop if $couch->ping }
 {
     my $res = $db->open_doc('doc id 4');
     ok $res->is_success; # 200
-    my $doc = $res->content;
+
+    my $doc = $res->to_document;
     isa_ok $doc => 'CouchDB::Object::Document';
     is $doc->id => 'doc id 4';
-    ok $doc->rev;
+    ok $doc->has_rev;
     is $doc->title => 'doc 4';
     is $doc->foo => 'bar';
 }
@@ -29,10 +30,11 @@ END { $db->drop if $couch->ping }
 {
     my $res = $db->open_doc('doc id 3');
     ok $res->is_success; # 200
-    my $doc = $res->content;
+
+    my $doc = $res->to_document;
     isa_ok $doc => 'CouchDB::Object::Document';
     is $doc->id => 'doc id 3';
-    ok $doc->rev;
+    ok $doc->has_rev;
     is $doc->title => 'doc 3';
     is_deeply $doc->tags => [qw(aaa bbb ccc)];
 }

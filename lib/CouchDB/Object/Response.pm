@@ -2,9 +2,8 @@ package CouchDB::Object::Response;
 
 use Moose;
 use MooseX::Types::URI qw(Uri);
-use Hash::AsObject;
-use JSON::XS ();
 use CouchDB::Object::Document;
+use CouchDB::Object::JSON;
 
 has 'http_response' => (
     is       => 'ro',
@@ -19,16 +18,17 @@ has 'http_response' => (
 );
 
 has 'uri' => (
-    is       => 'ro',
-    isa      => Uri,
-    coerce   => 1,
-    required => 1,
+    is      => 'ro',
+    isa     => Uri,
+    default => sub { shift->http_response->request->uri->clone },
+    lazy    => 1,
 );
 
 has 'content' => (
-    is       => 'ro',
-    isa      => 'Object', # XXX
-    required => 1,
+    is      => 'ro',
+    isa     => 'HashRef',
+    builder => 'parse_content',
+    lazy    => 1,
 );
 
 no Moose;
@@ -37,40 +37,21 @@ our $VERSION = '0.01';
 
 sub new_from_response {
     my ($class, $res) = @_;
-
-    return $class->new(
-        http_response => $res,
-        uri           => $res->request->uri->clone,
-        content       => $class->parse_content($res),
-    );
+    return $class->new(http_response => $res);
 }
 
 sub parse_content {
-    my ($class, $res) = @_;
+    my $self = shift;
+    my $res = $self->http_response;
+    return CouchDB::Object::JSON->decode( $res->content_type =~ /json/i ? $res->content : {} );
+}
 
-    my $content = $res->content_type =~ /json/i ? JSON::XS->new->decode($res->content) : {};
+sub to_document {
+    my $self = shift;
 
-    if (ref $content->{rows} eq 'ARRAY') { # _all_docs
-        my @docs = grep { exists $_->{id} and exists $_->{value} } @{ $content->{rows} };
-        for my $doc (@docs) {
-            my $id = delete $doc->{id};
-            $doc = CouchDB::Object::Document->new_from_json($doc->{value});
-            $doc->id($id) if defined $id;
-        }
-        $content->{rows} = \@docs;
-    }
-    elsif (ref $content->{new_revs} eq 'ARRAY') { # _bulk_docs
-        for my $doc (@{ $content->{new_revs} }) {
-            $doc = CouchDB::Object::Document->new_from_json($doc);
-        }
-    }
-
-    if (exists $content->{_id} and exists $content->{_rev}) {
-        return CouchDB::Object::Document->new_from_json($content);
-    }
-    else {
-        return Hash::AsObject->new($content);
-    }
+    my $content = $self->content;
+    return unless exists $content->{_id} and exists $content->{_rev};
+    return CouchDB::Object::Document->new_from_json($content);
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -92,6 +73,6 @@ it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<CouchDB::Object::Document>, L<CouchDB::Object::Documents>
+L<CouchDB::Object::Document>
 
 =cut

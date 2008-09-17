@@ -18,8 +18,8 @@ END { $db->drop if $couch->ping }
 my $post = CouchDB::Object::Document->new;
 $post->title('post doc');
 ok $db->save_doc($post)->is_success; # 201
-ok $post->id;
-ok $post->rev;
+ok $post->has_id;
+ok $post->has_rev;
 is $post->title => 'post doc';
 
 # modify (PUT)
@@ -35,5 +35,5 @@ $put->id('put doc id');
 $put->title('put doc');
 ok $db->save_doc($put)->is_success; # 201
 is $put->id => 'put doc id';
-ok $put->rev;
+ok $put->has_rev;
 is $put->title => 'put doc';
