@@ -1,7 +1,6 @@
 use strict;
 use t::CouchDB;
 use String::TT qw(strip);
-use CouchDB::Object::Document;
 
 my $couch = test_couch();
 
@@ -25,12 +24,11 @@ END { $db->drop if $couch->ping }
     ]);
     ok $res->is_success;
 
-    my $docs = $res->content;
-    is $docs->{total_rows} => 1;
-    is $docs->{offset} => 0;
+    is $res->content->{total_rows} => 1;
+    is $res->content->{offset} => 0;
 
-    for my $doc (@{ $docs->{rows} }) { # 1 x 5 = 5
-        $doc = CouchDB::Object::Document->new_from_json($doc->{value});
+    my @docs = $res->to_document;
+    for my $doc (@docs) { # 1 x 5 = 5
         isa_ok $doc => 'CouchDB::Object::Document';
         is $doc->id => 'doc id 3';
         ok $doc->has_rev;

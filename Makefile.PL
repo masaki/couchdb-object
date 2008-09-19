@@ -11,6 +11,7 @@ requires 'Hash::Merge';
 requires 'HTTP::Headers';
 requires 'HTTP::Request';
 requires 'JSON::XS';
+requires 'List::MoreUtils';
 requires 'LWP::UserAgent';
 requires 'URI';
 requires 'URI::Escape';

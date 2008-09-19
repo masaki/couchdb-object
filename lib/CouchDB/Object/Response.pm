@@ -2,6 +2,7 @@ package CouchDB::Object::Response;
 
 use Moose;
 use MooseX::Types::URI qw(Uri);
+use List::MoreUtils qw(all);
 use CouchDB::Object::Document;
 use CouchDB::Object::JSON;
 
@@ -50,8 +51,24 @@ sub to_document {
     my $self = shift;
 
     my $content = $self->content;
-    return unless exists $content->{_id} and exists $content->{_rev};
-    return CouchDB::Object::Document->new_from_json($content);
+
+    if (all { exists $content->{$_} } qw(_id _rev)) {
+        # TODO: DesignDocument
+        return CouchDB::Object::Document->new_from_json($content);
+    }
+    elsif (all { exists $content->{$_} } qw(total_rows offset rows)) {
+        return map {
+            my $doc = $_->{value} || {};
+            my $rev = delete $doc->{rev};
+            $doc = CouchDB::Object::Document->new_from_json($doc);
+            $doc->id($_->{id}) unless $doc->has_id;
+            $doc->rev($rev) unless $doc->has_rev;
+            $doc;
+        } @{ $content->{rows} };
+    }
+    else {
+        return;
+    }
 }
 
 __PACKAGE__->meta->make_immutable;
