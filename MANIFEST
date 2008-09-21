@@ -16,14 +16,14 @@ inc/Test/Base/Filter.pm
 inc/Test/Builder.pm
 inc/Test/Builder/Module.pm
 inc/Test/More.pm
+inc/URI.pm
 lib/CouchDB/Object.pm
 lib/CouchDB/Object/Database.pm
 lib/CouchDB/Object/Document.pm
-lib/CouchDB/Object/Documents.pm
+lib/CouchDB/Object/JSON.pm
 lib/CouchDB/Object/Response.pm
-lib/CouchDB/Object/Server.pm
+lib/CouchDB/Object/Role/Client.pm
 lib/CouchDB/Object/UserAgent.pm
-lib/CouchDB/Object/Utils.pm
 Makefile.PL
 MANIFEST			This list of files
 META.yml
@@ -32,5 +32,6 @@ t/00_compile.t
 t/01_server.t
 t/02_database.t
 t/03_document.t
-t/04_all_docs.t
+t/04_documents.t
 t/CouchDB.pm
+t/docs.json

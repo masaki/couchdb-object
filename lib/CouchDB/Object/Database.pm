@@ -4,6 +4,7 @@ use Moose;
 use MooseX::Types::URI qw(Uri);
 use Data::Dump::Streamer;
 use HTTP::Headers;
+use List::MoreUtils qw(each_array);
 use CouchDB::Object::JSON;
 
 with 'CouchDB::Object::Role::Client';
@@ -90,7 +91,22 @@ sub remove_doc {
 }
 
 sub bulk_docs {
-    # TODO: implements
+    my ($self, @docs) = @_;
+
+    my $body = sprintf '{ "docs": [%s] }', join ',', map { $_->to_json } @docs;
+    my $header = HTTP::Headers->new('Content-Type' => 'application/json');
+    my $res = $self->request(POST => $self->uri_for('_bulk_docs'), $header, $body);
+
+    # merge
+    if ($res->is_success) {
+        my $ea = each_array(@docs, @{ $res->content->{new_revs} });
+        while (my ($doc, $content) = $ea->()) {
+            $doc->id($content->{id})   if exists $content->{id};
+            $doc->rev($content->{rev}) if exists $content->{rev};
+        }
+    }
+
+    return $res;
 }
 
 sub query {
@@ -100,7 +116,7 @@ sub query {
         language => $lang || (ref $map eq 'CODE') ? 'text/perl' : 'javascript',
         map      => _code2str($map),
     };
-    $body->{reduce} = _code2str($reduce) if defined $reduce;
+    $body->{reduce} = _code2str($reduce) if $reduce;
     $body = CouchDB::Object::JSON->encode($body);
 
     my $header = HTTP::Headers->new('Content-Type' => 'application/json');
@@ -108,7 +124,8 @@ sub query {
 }
 
 sub view {
-    # TODO: implements
+    my ($self, $name, $args) = @_;
+    return $self->request(GET => $self->uri_for('_view', split(m!/!, $name), $args));
 }
 
 # from CouchDB::View::Document

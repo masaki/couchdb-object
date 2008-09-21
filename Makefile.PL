@@ -19,9 +19,7 @@ requires 'URI::Escape';
 # install_script '';
 
 test_requires 'Test::More';
-test_requires 'JSON::XS';
 test_requires 'String::Random';
-test_requires 'String::TT';
 test_requires 'URI';
 
 use_test_base;
