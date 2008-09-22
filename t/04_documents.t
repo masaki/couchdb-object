@@ -8,22 +8,24 @@ unless ($couch->ping) {
     plan skip_all => "Can't connect CouchDB server: " . test_server();
 }
 else {
-    plan tests => 287;
+    plan tests => 316;
 }
 
 my $db = $couch->db(test_dbname());
 $db->create;
 END { $db->drop if $couch->ping }
 
-my $json = read_json('t/docs.json');
-my @docs = map { CouchDB::Object::Document->new_from_json($_) } @$json;
-
 # /{dbname}/_bulk_docs (bulk_docs)
-{ # 3
-    my $res = $db->bulk_docs(@docs);
+{ # 32
+    my $json = read_json('t/docs.json');
+    my @docs = map { CouchDB::Object::Document->new_from_json($_) } @$json;
+    my $res = $db->bulk_docs(\@docs);
     ok $res->is_success;
     ok $res->content->{ok};
-    ok $res->content->{new_revs};
+
+    for my $doc (@docs) { # 1 x 30 = 30
+        ok $doc->has_rev;
+    }
 }
 
 # /{dbname}/_all_docs (all_docs)

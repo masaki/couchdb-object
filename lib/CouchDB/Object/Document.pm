@@ -43,13 +43,17 @@ sub new_from_json {
 
 sub to_json {
     my $self = shift;
+    return CouchDB::Object::JSON->encode($self->to_hash);
+}
+
+sub to_hash {
+    my $self = shift;
 
     my $hash = {};
     $hash->{_id}  = $self->id  if $self->has_id;
     $hash->{_rev} = $self->rev if $self->has_rev;
 
-    $hash = Hash::Merge::merge({%{ $self->_fields }}, $hash);
-    return CouchDB::Object::JSON->encode($hash);
+    return Hash::Merge::merge({%{ $self->_fields }}, $hash);
 }
 
 our $AUTOLOAD;

@@ -91,15 +91,17 @@ sub remove_doc {
 }
 
 sub bulk_docs {
-    my ($self, @docs) = @_;
+    my ($self, $docs) = @_;
 
-    my $body = sprintf '{ "docs": [%s] }', join ',', map { $_->to_json } @docs;
+    my $body = { docs => [ map { $_->to_hash } @$docs ] };
+    $body = CouchDB::Object::JSON->encode($body);
+
     my $header = HTTP::Headers->new('Content-Type' => 'application/json');
     my $res = $self->request(POST => $self->uri_for('_bulk_docs'), $header, $body);
 
     # merge
     if ($res->is_success) {
-        my $ea = each_array(@docs, @{ $res->content->{new_revs} });
+        my $ea = each_array(@$docs, @{ $res->content->{new_revs} });
         while (my ($doc, $content) = $ea->()) {
             $doc->id($content->{id})   if exists $content->{id};
             $doc->rev($content->{rev}) if exists $content->{rev};
