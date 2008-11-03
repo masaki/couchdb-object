@@ -16,12 +16,13 @@ requires 'LWP::UserAgent';
 requires 'URI';
 requires 'URI::Escape';
 
-# install_script '';
-
+tests 't/*.t';
 test_requires 'Test::More';
+test_requires 'Test::use::ok';
 test_requires 'String::Random';
 test_requires 'URI';
-
+author_tests 'xt';
 use_test_base;
+
 auto_include;
 WriteAll;

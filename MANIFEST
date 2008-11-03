@@ -1,5 +1,6 @@
 Changes
 inc/Module/Install.pm
+inc/Module/Install/AuthorTests.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/Can.pm
 inc/Module/Install/Fetch.pm
@@ -16,6 +17,7 @@ inc/Test/Base/Filter.pm
 inc/Test/Builder.pm
 inc/Test/Builder/Module.pm
 inc/Test/More.pm
+inc/Test/use/ok.pm
 inc/URI.pm
 lib/CouchDB/Object.pm
 lib/CouchDB/Object/Database.pm
@@ -35,3 +37,6 @@ t/03_document.t
 t/04_documents.t
 t/CouchDB.pm
 t/docs.json
+xt/01_pod.t
+xt/02_podcoverage.t
+xt/03_podspell.t
