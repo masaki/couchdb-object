@@ -1,31 +1,35 @@
-use strict;
+# -*- mode: perl -*-
+use Test::Base -Base;
 use t::CouchDB;
+use CouchDB::Object;
+use CouchDB::Object::Database;
 
-my $couch = test_couch();
-
-unless ($couch->ping) {
-    plan skip_all => "Can't connect CouchDB server: " . test_server();
+unless ($ENV{TEST_COUCHDB}) {
+    plan skip_all => '$ENV{TEST_COUCHDB} required for network testing';
 }
 else {
-    plan tests => 7;
+    plan tests => 6*2;
 }
 
-my $server = test_server();
-my $name   = test_dbname();
+my $tester = sub {
+    my $db = shift;
+    ok $db;
 
-my $uri = $server->clone;
-$uri->path_segments($name, '');
+    # create and drop
+    ok !$db->info;  # 404
+    ok $db->create; # 201
+    ok $db->info;   # 200
+    ok $db->drop;   # 200
+    ok !$db->info;  # 404
+};
 
-my $db = CouchDB::Object::Database->new(name => $name, server => $server);
+$tester->(
+    CouchDB::Object->new(uri => $ENV{TEST_COUCHDB})->db(test_dbname())
+);
 
-is $db->uri => $uri;
-
-# create
-ok $db->info->is_error;     # 404
-ok $db->create->is_success; # 201
-ok $db->info->is_success;   # 200
-is $db->info->content->{db_name} => $name;
-
-# drop
-ok $db->drop->is_success; # 200
-ok $db->info->is_error;   # 404
+$tester->(
+    CouchDB::Object::Database->new(
+        name     => test_dbname(),
+        base_uri => $ENV{TEST_COUCHDB}
+    )
+);

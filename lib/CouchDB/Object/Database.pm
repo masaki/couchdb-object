@@ -1,11 +1,9 @@
 package CouchDB::Object::Database;
 
-use Moose;
-use MooseX::Types::URI qw(Uri);
-use Data::Dump::Streamer;
+use Mouse;
+use MouseX::Types::URI;
 use HTTP::Headers;
 use List::MoreUtils qw(each_array);
-use CouchDB::Object::JSON;
 
 with 'CouchDB::Object::Role::Client';
 
@@ -15,44 +13,48 @@ has 'name' => (
     required => 1,
 );
 
-has 'server' => (
+has 'base_uri' => (
     is       => 'rw',
-    isa      => Uri,
+    isa      => 'URI',
     coerce   => 1,
     required => 1,
 );
 
-no Moose;
-
-our $VERSION = '0.01';
-
 sub uri {
     my $self = shift;
 
-    my $uri = $self->server->clone;
-    $uri->path_segments($self->name, '');
+    my $uri = $self->base_uri->clone;
+    $uri->path($uri->path . $self->name . '/');
     $uri->canonical;
 }
 
 sub create {
     my $self = shift;
-    return $self->request(PUT => $self->uri);
-}
 
-sub drop {
-    my $self = shift;
-    return $self->request(DELETE => $self->uri);
+    my $res = $self->ua->put($self->uri, Accept => 'application/json');
+    return $res->is_success;
 }
 
 sub info {
     my $self = shift;
-    return $self->request(GET => $self->uri);
+
+    my $res = $self->ua->get($self->uri, Accept => 'application/json');
+    return unless $res->is_success;
+    return $self->coder->decode($res->decoded_content);
+}
+
+sub drop {
+    my $self = shift;
+
+    my $res = $self->ua->delete($self->uri, Accept => 'application/json');
+    return $res->is_success;
 }
 
 sub compact {
     # TODO: implements
 }
 
+=comment
 sub all_docs {
     my ($self, $args) = @_;
     return $self->request(GET => $self->uri_for('_all_docs', $args));
@@ -132,14 +134,15 @@ sub view {
 
 # from CouchDB::View::Document
 sub _code2str {
+    require Data::Dump::Streamer;
     ref $_[0]
         ? sprintf 'do { my $CODE1; %s; $CODE1 }', Data::Dump::Streamer->new->Data($_[0])->Out
         : $_[0];
 }
 
-__PACKAGE__->meta->make_immutable;
+=cut
 
-1;
+no Mouse; __PACKAGE__->meta->make_immutable; 1;
 
 =head1 NAME
 

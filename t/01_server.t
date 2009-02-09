@@ -1,14 +1,14 @@
-use strict;
-use t::CouchDB;
+u# -*- mode: perl -*-
+use Test::Base -Base;
+use CouchDB::Object;
 
-my $couch = test_couch();
-
-unless ($couch->ping) {
-    plan skip_all => "Can't connect CouchDB server: " . test_server();
+unless ($ENV{TEST_COUCHDB}) {
+    plan skip_all => '$ENV{TEST_COUCHDB} required for network testing';
 }
 else {
     plan tests => 2;
 }
 
-is $couch->uri => test_server();
-isa_ok $couch->db(test_dbname()) => 'CouchDB::Object::Database';
+my $couch = CouchDB::Object->new(uri => $ENV{TEST_COUCHDB});
+ok $couch;
+ok $couch->info;

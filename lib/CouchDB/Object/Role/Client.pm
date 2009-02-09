@@ -1,49 +1,64 @@
 package CouchDB::Object::Role::Client;
 
-use Moose::Role;
-use HTTP::Request;
-use URI::Escape ();
-use CouchDB::Object::Response;
-use CouchDB::Object::UserAgent;
+use Mouse::Role;
 
-# requires_attr 'uri';
+{ # TODO: patch to lwp
+    package LWP::UserAgent;
+    use strict;
+    use warnings;
 
-has 'agent' => (
+    sub put {
+        require HTTP::Request::Common;
+        my ($self, @params) = @_;
+        my @suff = $self->_process_colonic_headers(\@params, ref $params[1] ? 2 : 1);
+        return $self->request( HTTP::Request::Common::PUT(@params), @suff );
+    }
+
+    sub delete {
+        require HTTP::Request::Common;
+        my ($self, @params) = @_;
+        my @suff = $self->_process_colonic_headers(\@params, 1);
+        return $self->request( HTTP::Request::Common::DELETE(@params), @suff );
+    }
+}
+
+has 'ua' => (
     is      => 'rw',
     isa     => 'LWP::UserAgent',
-    default => sub { CouchDB::Object::UserAgent->new },
     lazy    => 1,
+    default => sub {
+        require CouchDB::Object;
+        require LWP::UserAgent;
+        LWP::UserAgent->new(
+            agent      => "CouchDB::Object/$CouchDB::Object::VERSION",
+            parse_head => 0,
+            env_proxy  => 1,
+        );
+    },
 );
 
-no Moose::Role;
-
-our $VERSION = '0.01';
+has 'coder' => (
+    is      => 'rw',
+    isa     => 'JSON',
+    lazy    => 1,
+    default => sub {
+        require JSON;
+        JSON->new->utf8(1);
+    },
+);
 
 sub uri_for {
     my ($self, @args) = @_;
 
     my $params = (scalar @args and ref $args[$#args] eq 'HASH') ? pop @args : {};
-    my $args = join '/', map { URI::Escape::uri_escape_utf8($_) } @args;
-    $args =~ s!^/!!;
 
-    my $class = ref $self->uri;
-    my $base = $self->uri->clone;
-    $base =~ s{(?<!/)$}{/};
+    require URI::Escape;
+    my $path = join '/', map { URI::Escape::uri_escape_utf8($_) } map { split m!/! } @args;
 
-    my $uri = bless \($base . $args) => $class;
+    my $uri = $self->uri->clone;
+    $uri->path($uri->path . $path);
     $uri->query_form($params);
     $uri->canonical;
 }
 
-sub request {
-    my $self = shift;
-
-    my $req = HTTP::Request->new(@_);
-    my $res = $self->agent->request($req);
-
-    return CouchDB::Object::Response->new_from_response($res);
-}
-
-1;
-
-#__PACKAGE__->meta->make_immutable;
+no Mouse::Role; 1;

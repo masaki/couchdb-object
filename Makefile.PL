@@ -2,19 +2,21 @@ use inc::Module::Install;
 name 'CouchDB-Object';
 all_from 'lib/CouchDB/Object.pm';
 
-requires 'Moose';
-requires 'MooseX::Singleton';
-requires 'MooseX::Types::URI';
+requires 'Mouse' => '0.15';
+requires 'MouseX::Types::URI' => '0.02';
+
 requires 'Data::Dump::Streamer';
 requires 'Hash::AsObject';
 requires 'Hash::Merge';
 requires 'HTTP::Headers';
-requires 'HTTP::Request';
-requires 'JSON::XS';
-requires 'List::MoreUtils';
+
+requires 'HTTP::Request::Common';
 requires 'LWP::UserAgent';
 requires 'URI';
 requires 'URI::Escape';
+requires 'JSON' => '2.07';
+
+requires 'List::MoreUtils';
 
 tests 't/*.t';
 test_requires 'Test::More';

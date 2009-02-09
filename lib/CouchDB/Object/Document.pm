@@ -1,6 +1,6 @@
 package CouchDB::Object::Document;
 
-use Moose;
+use Mouse;
 use Hash::AsObject;
 use Hash::Merge ();
 use CouchDB::Object::JSON;
@@ -23,10 +23,6 @@ has '_fields' => (
     # TODO: coerce
     default => sub { Hash::AsObject->new },
 );
-
-no Moose;
-
-our $VERSION = '0.01';
 
 sub new_from_json {
     my ($class, $json) = @_;
@@ -65,9 +61,7 @@ sub AUTOLOAD {
 
 sub DESTROY {}
 
-__PACKAGE__->meta->make_immutable;
-
-1;
+no Mouse; __PACKAGE__->meta->make_immutable; 1;
 
 =head1 NAME
 

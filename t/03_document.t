@@ -1,19 +1,19 @@
-use strict;
+# -*- mode: perl -*-
+use Test::Base -Base;
 use t::CouchDB;
+use CouchDB::Object;
+use CouchDB::Object::Database;
 use CouchDB::Object::Document;
 
-my $couch = test_couch();
-
-unless ($couch->ping) {
-    plan skip_all => "Can't connect CouchDB server: " . test_server();
+unless ($ENV{TEST_COUCHDB}) {
+    plan skip_all => '$ENV{TEST_COUCHDB} required for network testing';
 }
 else {
     plan tests => 23;
 }
 
-my $db = $couch->db(test_dbname());
-$db->create;
-END { $db->drop if $couch->ping }
+my $db = test_db();
+END { $db->drop if $db }
 
 my $json = read_json('t/docs.json');
 delete $json->[0]->{_id};

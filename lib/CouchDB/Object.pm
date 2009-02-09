@@ -1,57 +1,52 @@
 package CouchDB::Object;
 
-use Moose;
+use Mouse;
+use MouseX::Types::URI;
 use URI;
 use CouchDB::Object::Database;
 
 with 'CouchDB::Object::Role::Client';
 
-has 'scheme' => (is => 'rw', isa => 'Str', default => sub { 'http' });
-has 'host'   => (is => 'rw', isa => 'Str', default => sub { 'localhost' });
-has 'port'   => (is => 'rw', isa => 'Num', default => sub { 5984 });
-
-no Moose;
+has 'uri' => (
+    is      => 'rw',
+    isa     => 'URI',
+    coerce  => 1,
+    lazy    => 1,
+    default => sub { URI->new('http://localhost:5984/') },
+);
 
 our $VERSION = '0.01';
 
-sub uri {
+sub info {
     my $self = shift;
-    return URI->new(sprintf '%s://%s:%d/', $self->scheme, $self->host, $self->port);
+
+    my $res = $self->ua->get($self->uri, Accept => 'application/json');
+    return unless $res->is_success;
+    return $self->coder->decode($res->decoded_content);
 }
 
 sub db {
     my ($self, $name) = @_;
     return CouchDB::Object::Database->new(
-        name   => $name,
-        server => $self->uri,
-        agent  => $self->agent,
+        name     => $name,
+        base_uri => $self->uri->clone,
+        ua       => $self->ua,
     );
 }
 
 sub all_dbs {
     my ($self, $args) = @_;
 
-    my $res = $self->request(GET => $self->uri_for('_all_dbs'));
-    return $self->ping ? map { $self->db($_) } @{ $res->content } : ();
-}
-
-sub info {
-    my $self = shift;
-    return $self->request(GET => $self->uri);
-}
-
-sub ping {
-    my $self = shift;
-    return eval { $self->info->is_success };
+    my $res = $self->ua->get($self->uri_for('_all_dbs'), Accept => 'application/json');
+    return unless $res->is_success;
+    return map { $self->db($_) } @{ $self->coder->decode($res->decoded_content) };
 }
 
 sub replicate {
     # TODO: implements
 }
 
-__PACKAGE__->meta->make_immutable;
-
-1;
+no Mouse; __PACKAGE__->meta->make_immutable; 1;
 
 =head1 NAME
 
