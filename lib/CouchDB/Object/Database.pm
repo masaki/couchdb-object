@@ -4,6 +4,7 @@ use Mouse;
 use MouseX::Types::URI;
 use HTTP::Headers;
 use List::MoreUtils qw(each_array);
+use CouchDB::Object::Document;
 
 with 'CouchDB::Object::Role::Client';
 
@@ -54,33 +55,39 @@ sub compact {
     # TODO: implements
 }
 
-=comment
-sub all_docs {
-    my ($self, $args) = @_;
-    return $self->request(GET => $self->uri_for('_all_docs', $args));
-}
-
 sub open_doc {
-    my ($self, $id, $args) = @_;
-    return $self->request(GET => $self->uri_for($id, $args));
+    my ($self, $doc, $args) = @_;
+
+    my $id = blessed $doc ? $doc->id : $doc;
+    my $res = $self->ua->get($self->uri_for($id, $args), Accept => 'application/json');
+    return unless $res->is_success;
+    return CouchDB::Object::Document->from_hash($self->coder->decode($res->decoded_content));
 }
 
 sub save_doc {
     my ($self, $doc, $args) = @_;
 
-    my $header = HTTP::Headers->new('Content-Type' => 'application/json');
-    my $res = $doc->has_id
-        ? $self->request(PUT => $self->uri_for($doc->id), $header, $doc->to_json)
-        : $self->request(POST => $self->uri, $header, $doc->to_json);
+    my %params = (
+        Accept       => 'application/json',
+        Content_Type => 'application/json',
+        Content      => $doc->to_json,
+    );
 
-    # merge
-    if ($res->is_success) {
-        my $content = $res->content;
-        $doc->id($content->{id})   if exists $content->{id};
-        $doc->rev($content->{rev}) if exists $content->{rev};
+    my $res;
+    if ($doc->has_id) {
+        $res = $self->ua->put($self->uri_for($doc->id, $args), %params);
+    }
+    else {
+        $res = $self->ua->post($self->uri, %params);
     }
 
-    return $res;
+    return unless $res->is_success;
+
+    # merge
+    my $content = $self->coder->decode($res->decoded_content);
+    $doc->id($content->{id})   if exists $content->{id};
+    $doc->rev($content->{rev}) if exists $content->{rev};
+    return $doc;
 }
 
 sub remove_doc {
@@ -88,8 +95,14 @@ sub remove_doc {
 
     return unless $doc->has_id and $doc->has_rev;
 
-    my $params = { rev => $doc->rev, %{ $args || {} } };
-    return $self->request(DELETE => $self->uri_for($doc->id, $params));
+    my $query = { %{ $args || {} }, rev => $doc->rev };
+    return $self->ua->delete($self->uri_for($doc->id, $query));
+}
+
+=comment
+sub all_docs {
+    my ($self, $args) = @_;
+    return $self->request(GET => $self->uri_for('_all_docs', $args));
 }
 
 sub bulk_docs {

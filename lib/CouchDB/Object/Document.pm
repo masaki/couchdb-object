@@ -24,17 +24,16 @@ has '_fields' => (
     default => sub { Hash::AsObject->new },
 );
 
-sub new_from_json {
-    my ($class, $json) = @_;
+sub from_hash {
+    my ($class, $hash) = @_;
 
-    my $id  = delete $json->{_id};
-    my $rev = delete $json->{_rev};
+    my $id  = delete $hash->{_id};
+    my $rev = delete $hash->{_rev};
 
-    my $self = $class->new(_fields => Hash::AsObject->new($json));
+    my $self = $class->new(_fields => Hash::AsObject->new($hash));
     $self->id($id)   if defined $id;
     $self->rev($rev) if defined $rev;
-
-    return $self;
+    $self;
 }
 
 sub to_json {

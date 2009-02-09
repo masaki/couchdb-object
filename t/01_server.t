@@ -1,4 +1,4 @@
-u# -*- mode: perl -*-
+# -*- mode: perl -*-
 use Test::Base -Base;
 use CouchDB::Object;
 

@@ -1,60 +1,62 @@
 # -*- mode: perl -*-
 use Test::Base -Base;
+use Test::Deep;
 use t::CouchDB;
 use CouchDB::Object;
-use CouchDB::Object::Database;
 use CouchDB::Object::Document;
 
 unless ($ENV{TEST_COUCHDB}) {
     plan skip_all => '$ENV{TEST_COUCHDB} required for network testing';
 }
 else {
-    plan tests => 23;
+    plan tests => 24;
 }
 
 my $db = test_db();
-END { $db->drop if $db }
-
-my $json = read_json('t/docs.json');
-delete $json->[0]->{_id};
+END { $db->drop if $db } # finalize
 
 # create (POST)
-my $doc1 = CouchDB::Object::Document->new_from_json($json->[0]);
-is $doc1->content => 'test document 1';
-is_deeply $doc1->tags => [qw(test document 1)];
-ok $db->save_doc($doc1)->is_success; # 201
-ok $doc1->has_id;
-ok $doc1->has_rev;
-
-# modify (PUT)
-my $rev = $doc1->rev;
-$doc1->author('baz');
-ok $db->save_doc($doc1)->is_success; # 200
-isnt $doc1->rev => $rev;
-is $doc1->author => 'baz';
+my $doc = CouchDB::Object::Document->new;
+$doc->content('content 1');
+$doc->tags(['tag1', 'tag2']);
+ok $db->save_doc($doc); # 201
+ok $doc->has_id;
+ok $doc->has_rev;
+is $doc->content => 'content 1';
+cmp_deeply $doc->tags => ['tag1', 'tag2'];
 
 # create with id (PUT)
-my $doc2 = CouchDB::Object::Document->new_from_json($json->[1]);
-is $doc2->id => 'test-document-2';
-is $doc2->content => 'test document 2';
-is_deeply $doc2->tags => [qw(test document 2)];
-ok $db->save_doc($doc2)->is_success; # 201
-ok $doc2->has_rev;
+my $doc_with_id = CouchDB::Object::Document->new;
+$doc_with_id->id('test doc_with_id');
+$doc_with_id->content('content 2');
+ok $db->save_doc($doc_with_id); # 201
+ok $doc_with_id->has_id;
+ok $doc_with_id->has_rev;
+
+# modify (PUT)
+my $id = $doc->id;
+my $rev = $doc->rev;
+$doc->title('foo');
+$doc->content('content 1 fixed');
+ok $db->save_doc($doc); # 200
+is $doc->id => $id;
+isnt $doc->rev => $rev;
+is $doc->title => 'foo';
+is $doc->content => 'content 1 fixed';
+cmp_deeply $doc->tags => ['tag1', 'tag2'];
 
 # open (GET)
-ok $db->open_doc('not-exist-id')->is_error; # 404
+ok !$db->open_doc('user-specified-not-exist-couchdb-document-id'); # 404
 
-my $res = $db->open_doc('test-document-2');
-ok $res->is_success; # 200
-
-my $doc3 = $res->to_document;
-isa_ok $doc3 => 'CouchDB::Object::Document';
-is $doc3->id => $doc2->id;
-ok $doc3->has_rev;
-is $doc3->content => $doc2->content;
-is_deeply $doc3->tags => $doc2->tags;
+my $open_doc = $db->open_doc($id);
+ok $open_doc;
+is $open_doc->id => $id;
+is $open_doc->rev => $doc->rev;
+is $open_doc->content => $doc->content;
+cmp_deeply $open_doc->tags => $doc->tags;
 
 # remove (DELETE)
-ok $db->remove_doc($doc1)->is_success; # 200
-ok $db->remove_doc($doc2)->is_success; # 200
-ok $db->open_doc($doc3->id)->is_error; # 404
+ok $db->remove_doc($doc);         # 200
+ok $db->remove_doc($doc_with_id); # 200
+ok !$db->remove_doc($doc);        # 404
+ok $db->open_doc($doc->id);       # 404
