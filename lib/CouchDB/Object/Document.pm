@@ -1,9 +1,7 @@
 package CouchDB::Object::Document;
 
 use Mouse;
-use Hash::AsObject;
-use Hash::Merge ();
-use CouchDB::Object::JSON;
+use Data::OpenStruct::Deep;
 
 has 'id' => (
     is        => 'rw',
@@ -17,11 +15,11 @@ has 'rev' => (
     predicate => 'has_rev',
 );
 
-has '_fields' => (
-    is      => 'ro',
-    isa     => 'Hash::AsObject',
-    # TODO: coerce
-    default => sub { Hash::AsObject->new },
+has '__fields' => (
+    is      => 'rw',
+    isa     => 'Data::OpenStruct::Deep',
+    lazy    => 1,
+    default => sub { Data::OpenStruct::Deep->new },
 );
 
 sub from_hash {
@@ -30,35 +28,37 @@ sub from_hash {
     my $id  = delete $hash->{_id};
     my $rev = delete $hash->{_rev};
 
-    my $self = $class->new(_fields => Hash::AsObject->new($hash));
+    my $self = $class->new(__fields => Data::OpenStruct::Deep->new($hash));
     $self->id($id)   if defined $id;
     $self->rev($rev) if defined $rev;
-    $self;
+
+    return $self;
 }
 
 sub to_json {
     my $self = shift;
-    return CouchDB::Object::JSON->encode($self->to_hash);
+    #return CouchDB::Object::JSON->encode($self->to_hash);
 }
 
 sub to_hash {
     my $self = shift;
 
-    my $hash = {};
+    my $hash = $self->__fields->to_hash;
     $hash->{_id}  = $self->id  if $self->has_id;
     $hash->{_rev} = $self->rev if $self->has_rev;
 
-    return Hash::Merge::merge({%{ $self->_fields }}, $hash);
+    return $hash;
 }
 
 our $AUTOLOAD;
 sub AUTOLOAD {
-    my $self = shift;
-    my ($key) = $AUTOLOAD =~ /([^:]+)$/;
-    return $self->_fields->$key(@_);
-}
+    my ($self, $value) = @_;
 
-sub DESTROY {}
+    my ($key) = $AUTOLOAD =~ /([^:]+)$/;
+    return if $key eq 'DESTROY';
+
+    $self->__fields->$key($value);
+}
 
 no Mouse; __PACKAGE__->meta->make_immutable; 1;
 
