@@ -6,7 +6,10 @@ use HTTP::Headers;
 use List::MoreUtils qw(each_array);
 use CouchDB::Object::Document;
 
-with 'CouchDB::Object::Role::Client';
+with qw(
+    CouchDB::Object::Role::UserAgent
+    CouchDB::Object::Role::Serializer
+);
 
 has 'name' => (
     is       => 'rw',
@@ -41,7 +44,7 @@ sub info {
 
     my $res = $self->ua->get($self->uri, Accept => 'application/json');
     return unless $res->is_success;
-    return $self->coder->decode($res->decoded_content);
+    return $self->deserialize($res->decoded_content);
 }
 
 sub drop {
@@ -61,7 +64,7 @@ sub open_doc {
     my $id = blessed $doc ? $doc->id : $doc;
     my $res = $self->ua->get($self->uri_for($id, $args), Accept => 'application/json');
     return unless $res->is_success;
-    return CouchDB::Object::Document->from_hash($self->coder->decode($res->decoded_content));
+    return CouchDB::Object::Document->from_hash($self->deserialize($res->decoded_content));
 }
 
 sub save_doc {
@@ -84,7 +87,7 @@ sub save_doc {
     return unless $res->is_success;
 
     # merge
-    my $content = $self->coder->decode($res->decoded_content);
+    my $content = $self->deserialize($res->decoded_content);
     $doc->id($content->{id})   if exists $content->{id};
     $doc->rev($content->{rev}) if exists $content->{rev};
     return $doc;

@@ -2,17 +2,22 @@ package CouchDB::Object;
 
 use Mouse;
 use MouseX::Types::URI;
-use URI;
 use CouchDB::Object::Database;
 
-with 'CouchDB::Object::Role::Client';
+with qw(
+    CouchDB::Object::Role::UserAgent
+    CouchDB::Object::Role::Serializer
+);
 
 has 'uri' => (
     is      => 'rw',
     isa     => 'URI',
     coerce  => 1,
     lazy    => 1,
-    default => sub { URI->new('http://localhost:5984/') },
+    default => sub {
+        require URI;
+        URI->new('http://localhost:5984/');
+    },
 );
 
 our $VERSION = '0.01';
@@ -22,7 +27,7 @@ sub info {
 
     my $res = $self->ua->get($self->uri, Accept => 'application/json');
     return unless $res->is_success;
-    return $self->coder->decode($res->decoded_content);
+    return $self->deserialize($res->decoded_content);
 }
 
 sub db {
@@ -39,7 +44,7 @@ sub all_dbs {
 
     my $res = $self->ua->get($self->uri_for('_all_dbs'), Accept => 'application/json');
     return unless $res->is_success;
-    return map { $self->db($_) } @{ $self->coder->decode($res->decoded_content) };
+    return map { $self->db($_) } @{ $self->deserialize($res->decoded_content) };
 }
 
 sub replicate {

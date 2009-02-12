@@ -2,21 +2,23 @@ use inc::Module::Install;
 name 'CouchDB-Object';
 all_from 'lib/CouchDB/Object.pm';
 
-requires 'Mouse' => '0.15';
+requires 'Mouse' => '0.16';
 requires 'MouseX::Types::URI' => '0.02';
+requires 'URI';
 
+# Database
 requires 'Data::Dump::Streamer';
-requires 'Hash::AsObject';
-requires 'Hash::Merge';
 requires 'HTTP::Headers';
+requires 'List::MoreUtils';
+# Document
+requires 'Data::OpenStruct::Deep';
 
+# Role::UserAgent
 requires 'HTTP::Request::Common';
 requires 'LWP::UserAgent';
-requires 'URI';
 requires 'URI::Escape';
+# Role::Serializer
 requires 'JSON' => '2.07';
-
-requires 'List::MoreUtils';
 
 tests 't/*.t';
 test_requires 'Test::More';

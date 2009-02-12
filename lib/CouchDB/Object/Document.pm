@@ -3,6 +3,8 @@ package CouchDB::Object::Document;
 use Mouse;
 use Data::OpenStruct::Deep;
 
+with 'CouchDB::Object::Role::Serializer';
+
 has 'id' => (
     is        => 'rw',
     isa       => 'Str',
@@ -37,7 +39,7 @@ sub from_hash {
 
 sub to_json {
     my $self = shift;
-    #return CouchDB::Object::JSON->encode($self->to_hash);
+    return $self->serialize($self->to_hash);
 }
 
 sub to_hash {

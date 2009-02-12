@@ -1,6 +1,7 @@
-package CouchDB::Object::Role::Client;
+package CouchDB::Object::Role::UserAgent;
 
 use Mouse::Role;
+use LWP::UserAgent;
 
 { # TODO: patch to lwp
     package LWP::UserAgent;
@@ -28,7 +29,6 @@ has 'ua' => (
     lazy    => 1,
     default => sub {
         require CouchDB::Object;
-        require LWP::UserAgent;
         LWP::UserAgent->new(
             agent      => "CouchDB::Object/$CouchDB::Object::VERSION",
             parse_head => 0,
@@ -37,18 +37,11 @@ has 'ua' => (
     },
 );
 
-has 'coder' => (
-    is      => 'rw',
-    isa     => 'JSON',
-    lazy    => 1,
-    default => sub {
-        require JSON;
-        JSON->new->utf8(1);
-    },
-);
+# requires_attr 'uri';
 
 sub uri_for {
     my ($self, @args) = @_;
+    return unless $self->can('uri'); # Mouse hasn't has_method
 
     my $params = (scalar @args and ref $args[$#args] eq 'HASH') ? pop @args : {};
 
