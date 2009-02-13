@@ -70,6 +70,18 @@ no Mouse; __PACKAGE__->meta->make_immutable; 1;
 
 CouchDB::Object::Document - Interface to CouchDB document
 
+=head1 METHODS
+
+=head2 id
+
+=head2 rev
+
+=head2 new
+
+=head2 to_json
+
+=head2 to_hash
+
 =head1 AUTHOR
 
 NAKAGAWA Masaki E<lt>masaki@cpan.orgE<gt>
