@@ -24,22 +24,19 @@ has '__fields' => (
     default => sub { Data::OpenStruct::Deep->new },
 );
 
-sub from_hash {
-    my ($class, $hash) = @_;
+sub BUILDARGS {
+    my $class = shift;
 
-    my $id  = delete $hash->{_id};
-    my $rev = delete $hash->{_rev};
+    my $params = ref $_[0] eq 'HASH' ? shift : { @_ };
 
-    my $self = $class->new(__fields => Data::OpenStruct::Deep->new($hash));
-    $self->id($id)   if defined $id;
-    $self->rev($rev) if defined $rev;
+    my $args = {};
+    for my $key (qw(id rev)) {
+        my $value = delete $params->{$key} || delete $params->{"_${key}"};
+        $args->{$key} = $value if defined $value;
+    }
+    $args->{__fields} = Data::OpenStruct::Deep->new($params);
 
-    return $self;
-}
-
-sub to_json {
-    my $self = shift;
-    return $self->serialize($self->to_hash);
+    return $args;
 }
 
 sub to_hash {
@@ -50,6 +47,11 @@ sub to_hash {
     $hash->{_rev} = $self->rev if $self->has_rev;
 
     return $hash;
+}
+
+sub to_json {
+    my $self = shift;
+    return $self->serialize($self->to_hash);
 }
 
 our $AUTOLOAD;
