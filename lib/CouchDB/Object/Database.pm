@@ -2,8 +2,6 @@ package CouchDB::Object::Database;
 
 use Mouse;
 use MouseX::Types::URI;
-use HTTP::Headers;
-use List::MoreUtils qw(each_array);
 use CouchDB::Object::Document;
 
 with qw(
