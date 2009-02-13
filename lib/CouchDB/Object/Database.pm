@@ -62,9 +62,10 @@ sub open_doc {
     my ($self, $doc, $args) = @_;
 
     my $id = blessed $doc ? $doc->id : $doc;
-    my $res = $self->ua->get($self->uri_for($id, $args), Accept => 'application/json');
+    my $query = $args || {};
+    my $res = $self->ua->get($self->uri_for($id, $query), Accept => 'application/json');
     return unless $res->is_success;
-    return CouchDB::Object::Document->from_hash($self->deserialize($res->decoded_content));
+    return CouchDB::Object::Document->new($self->deserialize($res->decoded_content));
 }
 
 sub save_doc {
@@ -78,7 +79,8 @@ sub save_doc {
 
     my $res;
     if ($doc->has_id) {
-        $res = $self->ua->put($self->uri_for($doc->id, $args), %params);
+        my $query = $args || {};
+        $res = $self->ua->put($self->uri_for($doc->id, $query), %params);
     }
     else {
         $res = $self->ua->post($self->uri, %params);
@@ -99,7 +101,8 @@ sub remove_doc {
     return unless $doc->has_id and $doc->has_rev;
 
     my $query = { %{ $args || {} }, rev => $doc->rev };
-    return $self->ua->delete($self->uri_for($doc->id, $query));
+    my $res = $self->ua->delete($self->uri_for($doc->id, $query), Accept => 'application/json');
+    return $res->is_success;
 }
 
 =comment
