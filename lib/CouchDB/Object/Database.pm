@@ -2,7 +2,10 @@ package CouchDB::Object::Database;
 
 use Mouse;
 use MouseX::Types::URI;
+use List::MoreUtils qw(each_array);
 use CouchDB::Object::Document;
+use CouchDB::Object::Iterator;
+use namespace::clean -except => ['meta'];
 
 with qw(
     CouchDB::Object::Role::UserAgent
@@ -103,33 +106,43 @@ sub remove_doc {
     return $res->is_success;
 }
 
-=comment
 sub all_docs {
     my ($self, $args) = @_;
-    return $self->request(GET => $self->uri_for('_all_docs', $args));
+
+    my $query = $args || {};
+    my $res = $self->ua->get($self->uri_for('_all_docs', $query), Accept => 'application/json');
+    return unless $res->is_success;
+    return CouchDB::Object::Iterator->new($self->deserialize($res->decoded_content));
 }
 
 sub bulk_docs {
     my ($self, $docs) = @_;
 
     my $body = { docs => [ map { $_->to_hash } @$docs ] };
-    $body = CouchDB::Object::JSON->encode($body);
+    my %params = (
+        Accept       => 'application/json',
+        Content_Type => 'application/json',
+        Content      => $self->serialize($body),
+    );
 
-    my $header = HTTP::Headers->new('Content-Type' => 'application/json');
-    my $res = $self->request(POST => $self->uri_for('_bulk_docs'), $header, $body);
+    my $res = $self->ua->post($self->uri_for('_bulk_docs'), %params);
+    return unless $res->is_success;
 
     # merge
-    if ($res->is_success) {
-        my $ea = each_array(@$docs, @{ $res->content->{new_revs} });
-        while (my ($doc, $content) = $ea->()) {
-            $doc->id($content->{id})   if exists $content->{id};
-            $doc->rev($content->{rev}) if exists $content->{rev};
+    my $contents = $self->deserialize($res->decoded_content);
+    my @new_revs = @{ $contents->{new_revs} };
+    if (@$docs == @new_revs) {
+        my $ea = each_array(@$docs, @new_revs);
+        while (my ($doc, $new) = $ea->()) {
+            $doc->id($new->{id})   if exists $new->{id};
+            $doc->rev($new->{rev}) if exists $new->{rev};
         }
     }
 
-    return $res;
+    return $docs;
 }
 
+=comment
 sub query {
     my ($self, $map, $reduce, $lang, $args) = @_;
 

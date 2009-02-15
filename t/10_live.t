@@ -3,6 +3,7 @@ use Test::Base;
 use Test::Deep;
 use String::Random ();
 use CouchDB::Object;
+use CouchDB::Object::Document;
 
 unless ($ENV{TEST_COUCHDB}) {
     plan skip_all => '$ENV{TEST_COUCHDB} required for network testing';
