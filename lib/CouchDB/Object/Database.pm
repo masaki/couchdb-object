@@ -2,10 +2,9 @@ package CouchDB::Object::Database;
 
 use Mouse;
 use MouseX::Types::URI;
-use List::MoreUtils qw(each_array);
+use List::MoreUtils ();
 use CouchDB::Object::Document;
 use CouchDB::Object::Iterator;
-use namespace::clean -except => ['meta'];
 
 with qw(
     CouchDB::Object::Role::UserAgent
@@ -112,7 +111,9 @@ sub all_docs {
     my $query = $args || {};
     my $res = $self->ua->get($self->uri_for('_all_docs', $query), Accept => 'application/json');
     return unless $res->is_success;
-    return CouchDB::Object::Iterator->new($self->deserialize($res->decoded_content));
+
+    my $content = $self->deserialize($res->decoded_content);
+    return CouchDB::Object::Iterator->new($content->{rows});
 }
 
 sub bulk_docs {
@@ -132,7 +133,7 @@ sub bulk_docs {
     my $contents = $self->deserialize($res->decoded_content);
     my @new_revs = @{ $contents->{new_revs} };
     if (@$docs == @new_revs) {
-        my $ea = each_array(@$docs, @new_revs);
+        my $ea = List::MoreUtils::each_array(@$docs, @new_revs);
         while (my ($doc, $new) = $ea->()) {
             $doc->id($new->{id})   if exists $new->{id};
             $doc->rev($new->{rev}) if exists $new->{rev};
@@ -172,7 +173,7 @@ sub _code2str {
 
 =cut
 
-no Mouse; __PACKAGE__->meta->make_immutable; 1;
+no Mouse; __PACKAGE__->meta->make_immutable;
 
 =head1 NAME
 
@@ -180,19 +181,27 @@ CouchDB::Object::Database - Interface to CouchDB database
 
 =head1 SYNOPSIS
 
-=head1 METHODS
+=head1 DESCRIPTION
 
-=head2 new(name => $dbname, server => $uri)
-
-Returns the L<CouchDB::Object::Database> object
+=head1 PROPERTIES
 
 =head2 name
 
 Returns the database name
 
+=head2 base_uri
+
+Returns the database base uri
+
 =head2 uri
 
 Returns the database uri
+
+=head1 METHODS
+
+=head2 new(name => $dbname, base_uri => $uri)
+
+Returns the L<CouchDB::Object::Database> object
 
 =head2 create
 
@@ -200,7 +209,15 @@ Returns the database uri
 
 =head2 info
 
-=head2 compact
+=head2 open_doc($id, \%args?)
+
+=head2 save_doc($doc, \%args?)
+
+=head2 remove_doc($doc, \%args?)
+
+=head2 all_docs(\%args?)
+
+=head2 bulk_docs(\@docs)
 
 =head1 AUTHOR
 
@@ -213,6 +230,6 @@ it under the same terms as Perl itself.
 
 =head1 SEE ALSO
 
-L<CouchDB::Object::Document>, L<CouchDB::Object::Response>
+L<CouchDB::Object::Document>, L<CouchDB::Object::Iterator>
 
 =cut

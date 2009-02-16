@@ -9,7 +9,7 @@ unless ($ENV{TEST_COUCHDB}) {
     plan skip_all => '$ENV{TEST_COUCHDB} required for network testing';
 }
 else {
-    plan 'no_plan';
+    plan tests => 53;
 }
 
 my $couch = CouchDB::Object->new(uri => $ENV{TEST_COUCHDB});
@@ -39,21 +39,12 @@ END { $db->drop if defined $db }
     }
 }
 
-{ # all_docs with counts (1 tests)
+{ # all_docs with counts (11 tests)
     my $docs = $db->all_docs({ count => 5 });
     is $docs->count => 5;
-}
 
-#{ # temp_view [query] (21 tests)
-#    my $docs = $db->query('function(doc) { emit(null, doc) }');
-#    is $docs->count => 10;
-#
-#    while (my $doc = $docs->next) { # 10 times x 2 tests = 20
-#        ok $doc->has_id;
-#        ok $doc->has_rev;
-#    }
-#}
-#
-#{ # 4
-#    my $res = $db->query('function(doc) { emit(doc.num, doc) }', '', '', { startkey => '"foo"' });
-#}
+    while (my $doc = $docs->next) { # 5 times x 2 tests = 10
+        ok $doc->has_id;
+        ok $doc->has_rev;
+    }
+}

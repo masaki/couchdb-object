@@ -14,9 +14,11 @@ requires 'URI::Escape';
 requires 'JSON' => '2.07';
 
 # Database
-#requires 'Data::Dump::Streamer';
+requires 'List::MoreUtils';
 # Document
 requires 'Data::OpenStruct::Deep';
+# Iterator
+requires 'Array::Iterator';
 
 tests 't/*.t';
 test_requires 'Test::More';

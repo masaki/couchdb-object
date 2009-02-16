@@ -64,7 +64,7 @@ sub AUTOLOAD {
     $self->__fields->$key($value);
 }
 
-no Mouse; __PACKAGE__->meta->make_immutable; 1;
+no Mouse; __PACKAGE__->meta->make_immutable;
 
 =head1 NAME
 
