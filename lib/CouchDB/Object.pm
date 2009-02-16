@@ -1,5 +1,6 @@
 package CouchDB::Object;
 
+use 5.008001;
 use Mouse;
 use MouseX::Types::URI;
 use CouchDB::Object::Database;
