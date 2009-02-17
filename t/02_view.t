@@ -4,7 +4,7 @@ use Test::Deep;
 use CouchDB::Object::View;
 use CouchDB::Object::DesignDocument;
 
-plan tests => 7 * 2;
+plan tests => 8 * 2;
 
 my @view = (
     CouchDB::Object::View->new(name => 'foo', map => 'function(doc) { emit(null, doc) }'),
@@ -19,7 +19,8 @@ my $tester = sub {
     my $doc = shift;
 
     ok $doc->has_id, 'has id';
-    is $doc->id => "foobar", 'not start "_design"';
+    is $doc->id => "_design/foobar", 'id';
+    is $doc->name => "foobar", 'name';
 
     is scalar(my @views = $doc->views) => 2;
     ok $doc->view('foo'), 'has "foo" view';
@@ -61,7 +62,7 @@ my $tester = sub {
 
 { # empty
     my $doc = CouchDB::Object::DesignDocument->new;
-    $doc->id("foobar");
+    $doc->name("foobar");
     $doc->add_view($_) for @view;
 
     $tester->($doc);

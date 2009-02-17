@@ -6,14 +6,6 @@ use CouchDB::Object::View;
 
 extends 'CouchDB::Object::Document';
 
-around 'id' => sub {
-    my $next = shift;
-
-    my $id = $next->(@_);
-    $id =~ s!_design/!! if defined $id;
-    return $id;
-};
-
 has 'language' => (
     is      => 'rw',
     isa     => 'Str',
@@ -26,6 +18,19 @@ has 'views' => (
     auto_deref => 1,
     default    => sub { [] },
 );
+
+sub name {
+    my $self = shift;
+
+    if (@_) {
+        (my $name = shift) =~ s!_design/!!;
+        $self->id("_design/${name}");
+    }
+    else {
+        (my $name = $self->id) =~ s!_design/!!;
+        return $name;
+    }
+}
 
 sub BUILDARGS {
     my $class = shift;
@@ -70,8 +75,8 @@ sub to_hash {
     my $self = shift;
 
     my $hash = { language => $self->language, views => {} };
-    $hash->{_id}  = "_design/" . $self->id if $self->has_id;
-    $hash->{_rev} = $self->rev             if $self->has_rev;
+    $hash->{_id}  = $self->id  if $self->has_id;
+    $hash->{_rev} = $self->rev if $self->has_rev;
 
     for my $view ($self->views) {
         $hash->{views}->{$view->name} = { map => $view->map };
