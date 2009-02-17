@@ -32,6 +32,7 @@ sub uri {
     $uri->canonical;
 }
 
+# database
 sub create {
     my $self = shift;
 
@@ -58,6 +59,7 @@ sub compact {
     # TODO: implements
 }
 
+# document
 sub open_doc {
     my ($self, $doc, $args) = @_;
 
@@ -105,6 +107,7 @@ sub remove_doc {
     return $res->is_success;
 }
 
+# documents
 sub all_docs {
     my ($self, $args) = @_;
 
@@ -143,35 +146,13 @@ sub bulk_docs {
     return $docs;
 }
 
-=comment
 sub query {
-    my ($self, $map, $reduce, $lang, $args) = @_;
-
-    my $body = {
-        language => $lang || (ref $map eq 'CODE') ? 'text/perl' : 'javascript',
-        map      => _code2str($map),
-    };
-    $body->{reduce} = _code2str($reduce) if $reduce;
-    $body = CouchDB::Object::JSON->encode($body);
-
-    my $header = HTTP::Headers->new('Content-Type' => 'application/json');
-    return $self->request(POST => $self->uri_for('_temp_view', $args), $header, $body);
+    # TODO: implements
 }
 
 sub view {
-    my ($self, $name, $args) = @_;
-    return $self->request(GET => $self->uri_for('_view', split(m!/!, $name), $args));
+    # TODO: implements
 }
-
-# from CouchDB::View::Document
-sub _code2str {
-    require Data::Dump::Streamer;
-    ref $_[0]
-        ? sprintf 'do { my $CODE1; %s; $CODE1 }', Data::Dump::Streamer->new->Data($_[0])->Out
-        : $_[0];
-}
-
-=cut
 
 no Mouse; __PACKAGE__->meta->make_immutable;
 
@@ -183,37 +164,50 @@ CouchDB::Object::Database - Interface to CouchDB database
 
 =head1 DESCRIPTION
 
-=head1 PROPERTIES
-
-=head2 name
-
-Returns the database name
-
-=head2 base_uri
-
-Returns the database base uri
-
-=head2 uri
-
-Returns the database uri
+This module is an interface to CouchDB database.
+This module can populate database and documents within the database.
 
 =head1 METHODS
 
 =head2 new(name => $dbname, base_uri => $uri)
 
-Returns the L<CouchDB::Object::Database> object
+Returns the L<CouchDB::Object::Database> object.
+
+=head2 name
+
+Returns the name of the database.
+
+=head2 base_uri
+
+Returns the base URI of the database.
+
+=head2 uri
+
+Returns the URI of the database.
 
 =head2 create
 
+Creates the database. It returns C<true> if succeeded.
+
 =head2 drop
+
+Deletes the database. It returns C<true> if succeeded.
 
 =head2 info
 
+Returns the information C<HashRef> of the database or C<undef>.
+
 =head2 open_doc($id, \%args?)
+
+Returns the document by C<$id>.
 
 =head2 save_doc($doc, \%args?)
 
+Creates or updates the specified document C<$doc>.
+
 =head2 remove_doc($doc, \%args?)
+
+Deletes the specified document C<$doc>.
 
 =head2 all_docs(\%args?)
 

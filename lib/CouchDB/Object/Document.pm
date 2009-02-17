@@ -72,11 +72,11 @@ CouchDB::Object::Document - Interface to CouchDB document
 
 =head1 METHODS
 
-=head2 id
+=head2 new($json?)
 
-=head2 rev
+=head2 id($id?)
 
-=head2 new
+=head2 rev($rev?)
 
 =head2 to_json
 
