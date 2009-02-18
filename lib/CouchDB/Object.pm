@@ -33,11 +33,7 @@ sub info {
 
 sub db {
     my ($self, $name) = @_;
-    return CouchDB::Object::Database->new(
-        name     => $name,
-        base_uri => $self->uri->clone,
-        ua       => $self->ua,
-    );
+    return CouchDB::Object::Database->new(couch => $self, name => $name);
 }
 
 sub all_dbs {

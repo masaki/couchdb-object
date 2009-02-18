@@ -11,23 +11,23 @@ with qw(
     CouchDB::Object::Role::Serializer
 );
 
+has 'couch' => (
+    is       => 'rw',
+    isa      => 'CouchDB::Object',
+    weak_ref => 1,
+    required => 1,
+);
+
 has 'name' => (
     is       => 'rw',
     isa      => 'Str',
     required => 1,
 );
 
-has 'base_uri' => (
-    is       => 'rw',
-    isa      => 'URI',
-    coerce   => 1,
-    required => 1,
-);
-
 sub uri {
     my $self = shift;
 
-    my $uri = $self->base_uri->clone;
+    my $uri = $self->couch->uri->clone;
     $uri->path($uri->path . $self->name . '/');
     $uri->canonical;
 }
