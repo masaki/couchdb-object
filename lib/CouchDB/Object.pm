@@ -3,6 +3,7 @@ package CouchDB::Object;
 use 5.008001;
 use Mouse;
 use MouseX::Types::URI;
+use Data::OpenStruct::Deep;
 use CouchDB::Object::Database;
 
 with qw(
@@ -28,12 +29,24 @@ sub info {
 
     my $res = $self->ua->get($self->uri, Accept => 'application/json');
     return unless $res->is_success;
-    return $self->deserialize($res->decoded_content);
+    return Data::OpenStruct::Deep->new($self->deserialize($res->decoded_content));
 }
 
-sub db {
+sub version {
+    my $self = shift;
+
+    return unless my $info = $self->info;
+    return [ $info->version =~ /^(\d\.)+/ ]->[0];
+}
+
+sub database {
     my ($self, $name) = @_;
     return CouchDB::Object::Database->new(couch => $self, name => $name);
+}
+
+{
+    no warnings 'once';
+    *db = \&database;
 }
 
 sub all_dbs {
