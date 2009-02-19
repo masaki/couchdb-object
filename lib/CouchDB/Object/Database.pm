@@ -1,21 +1,20 @@
 package CouchDB::Object::Database;
 
 use Mouse;
-use MouseX::Types::URI;
 use List::MoreUtils ();
+use CouchDB::Object;
 use CouchDB::Object::Document;
 use CouchDB::Object::Iterator;
-
-with qw(
-    CouchDB::Object::Role::UserAgent
-    CouchDB::Object::Role::Serializer
-);
 
 has 'couch' => (
     is       => 'rw',
     isa      => 'CouchDB::Object',
     weak_ref => 1,
     required => 1,
+    handles  => [qw(
+        http_get http_post http_put http_delete
+        decode_json encode_json
+    )],
 );
 
 has 'name' => (
@@ -35,24 +34,18 @@ sub uri {
 # database
 sub create {
     my $self = shift;
-
-    my $res = $self->ua->put($self->uri, Accept => 'application/json');
-    return $res->is_success;
+    return $self->http_put($self->uri)->is_success;
 }
 
 sub info {
     my $self = shift;
-
-    my $res = $self->ua->get($self->uri, Accept => 'application/json');
-    return unless $res->is_success;
-    return $self->deserialize($res->decoded_content);
+    my $res = $self->http_get($self->uri);
+    return $res->is_success ? $self->decode_json($res->decoded_content) : undef;
 }
 
 sub drop {
     my $self = shift;
-
-    my $res = $self->ua->delete($self->uri, Accept => 'application/json');
-    return $res->is_success;
+    return $self->http_delete($self->uri)->is_success;
 }
 
 sub compact {
@@ -64,36 +57,29 @@ sub open_doc {
     my ($self, $doc, $args) = @_;
 
     my $id = blessed $doc ? $doc->id : $doc;
-    my $query = $args || {};
-    my $res = $self->ua->get($self->uri_for($id, $query), Accept => 'application/json');
+    my $res = $self->http_get($self->uri_for($id, $args || {}));
     return unless $res->is_success;
-    return CouchDB::Object::Document->new($self->deserialize($res->decoded_content));
+    return CouchDB::Object::Document->new($self->decode_json($res->decoded_content));
 }
 
 sub save_doc {
     my ($self, $doc, $args) = @_;
 
-    my %params = (
-        Accept       => 'application/json',
-        Content_Type => 'application/json',
-        Content      => $doc->to_json,
-    );
-
     my $res;
     if ($doc->has_id) {
         my $query = $args || {};
-        $res = $self->ua->put($self->uri_for($doc->id, $query), %params);
+        $res = $self->http_put($self->uri_for($doc->id, $query), $doc->to_json);
     }
     else {
-        $res = $self->ua->post($self->uri, %params);
+        $res = $self->http_post($self->uri, $doc->to_json);
     }
 
     return unless $res->is_success;
 
     # merge
-    my $content = $self->deserialize($res->decoded_content);
-    $doc->id($content->{id})   if exists $content->{id};
-    $doc->rev($content->{rev}) if exists $content->{rev};
+    my $content = $self->decode_json($res->decoded_content);
+    $doc->id($content->id)   if defined $content->id;
+    $doc->rev($content->rev) if defined $content->rev;
     return $doc;
 }
 
@@ -103,8 +89,7 @@ sub remove_doc {
     return unless $doc->has_id and $doc->has_rev;
 
     my $query = { %{ $args || {} }, rev => $doc->rev };
-    my $res = $self->ua->delete($self->uri_for($doc->id, $query), Accept => 'application/json');
-    return $res->is_success;
+    return $self->http_delete($self->uri_for($doc->id, $query))->is_success;
 }
 
 # documents
@@ -112,34 +97,29 @@ sub all_docs {
     my ($self, $args) = @_;
 
     my $query = $args || {};
-    my $res = $self->ua->get($self->uri_for('_all_docs', $query), Accept => 'application/json');
+    # TODO: filer_query
+    my $res = $self->http_get($self->uri_for('_all_docs', $query));
     return unless $res->is_success;
 
-    my $content = $self->deserialize($res->decoded_content);
-    return CouchDB::Object::Iterator->new($content->{rows});
+    my $content = $self->decode_json($res->decoded_content);
+    return CouchDB::Object::Iterator->new($content->rows);
 }
 
 sub bulk_docs {
     my ($self, $docs) = @_;
 
     my $body = { docs => [ map { $_->to_hash } @$docs ] };
-    my %params = (
-        Accept       => 'application/json',
-        Content_Type => 'application/json',
-        Content      => $self->serialize($body),
-    );
-
-    my $res = $self->ua->post($self->uri_for('_bulk_docs'), %params);
+    my $res = $self->http_post($self->uri_for('_bulk_docs'), $self->encode_json($body));
     return unless $res->is_success;
 
     # merge
-    my $contents = $self->deserialize($res->decoded_content);
-    my @new_revs = @{ $contents->{new_revs} };
+    my $contents = $self->decode_json($res->decoded_content);
+    my @new_revs = @{ $contents->new_revs };
     if (@$docs == @new_revs) {
         my $ea = List::MoreUtils::each_array(@$docs, @new_revs);
         while (my ($doc, $new) = $ea->()) {
-            $doc->id($new->{id})   if exists $new->{id};
-            $doc->rev($new->{rev}) if exists $new->{rev};
+            $doc->id($new->id)   if defined $new->id;
+            $doc->rev($new->rev) if defined $new->rev;
         }
     }
 
@@ -151,6 +131,10 @@ sub query {
 }
 
 sub view {
+    # TODO: implements
+}
+
+sub _filter_query {
     # TODO: implements
 }
 

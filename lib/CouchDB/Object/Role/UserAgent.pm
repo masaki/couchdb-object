@@ -1,7 +1,9 @@
 package CouchDB::Object::Role::UserAgent;
 
 use Mouse::Role;
+use HTTP::Request;
 use LWP::UserAgent;
+use CouchDB::Object; # for VERSION
 
 { # TODO: patch to lwp
     package LWP::UserAgent;
@@ -28,7 +30,6 @@ has 'ua' => (
     isa     => 'LWP::UserAgent',
     lazy    => 1,
     default => sub {
-        require CouchDB::Object;
         LWP::UserAgent->new(
             agent      => "CouchDB::Object/$CouchDB::Object::VERSION",
             parse_head => 0,
@@ -38,6 +39,25 @@ has 'ua' => (
 );
 
 # requires_attr 'uri';
+
+sub http_get    { shift->http_request(GET    => @_) }
+sub http_post   { shift->http_request(POST   => @_) }
+sub http_put    { shift->http_request(PUT    => @_) }
+sub http_delete { shift->http_request(DELETE => @_) }
+
+sub http_request {
+    my ($self, $method, $uri, $body) = @_;
+
+    require HTTP::Request;
+    my $req = HTTP::Request->new(uc $method, $uri, [ Accept => 'application/json' ]);
+
+    if (defined $body and length $body > 0) {
+        $req->header('Content-Type' => 'application/json');
+        $req->content($body);
+    }
+
+    return $self->ua->request($req);
+}
 
 sub uri_for {
     my ($self, @args) = @_;

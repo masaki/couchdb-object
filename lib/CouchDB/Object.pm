@@ -3,7 +3,7 @@ package CouchDB::Object;
 use 5.008001;
 use Mouse;
 use MouseX::Types::URI;
-use Data::OpenStruct::Deep;
+use URI;
 use CouchDB::Object::Database;
 
 with qw(
@@ -16,45 +16,34 @@ has 'uri' => (
     isa     => 'URI',
     coerce  => 1,
     lazy    => 1,
-    default => sub {
-        require URI;
-        URI->new('http://localhost:5984/');
-    },
+    default => sub { URI->new('http://localhost:5984/') },
 );
 
 our $VERSION = '0.01';
 
 sub info {
     my $self = shift;
-
-    my $res = $self->ua->get($self->uri, Accept => 'application/json');
-    return unless $res->is_success;
-    return Data::OpenStruct::Deep->new($self->deserialize($res->decoded_content));
+    my $res = $self->http_get($self->uri);
+    return $res->is_success ? $self->decode_json($res->decoded_content) : undef;
 }
 
 sub version {
     my $self = shift;
-
     return unless my $info = $self->info;
     return [ $info->version =~ /^(\d\.)+/ ]->[0];
 }
 
-sub database {
+sub db {
     my ($self, $name) = @_;
     return CouchDB::Object::Database->new(couch => $self, name => $name);
-}
-
-{
-    no warnings 'once';
-    *db = \&database;
 }
 
 sub all_dbs {
     my ($self, $args) = @_;
 
-    my $res = $self->ua->get($self->uri_for('_all_dbs'), Accept => 'application/json');
+    my $res = $self->http_get($self->uri_for('_all_dbs'));
     return unless $res->is_success;
-    return map { $self->db($_) } @{ $self->deserialize($res->decoded_content) };
+    return map { $self->db($_) } @{ $self->decode_json($res->decoded_content) };
 }
 
 sub replicate {
