@@ -7,6 +7,7 @@ use URI;
 use CouchDB::Object::Database;
 
 with qw(
+    CouchDB::Object::Role::UriFor
     CouchDB::Object::Role::UserAgent
     CouchDB::Object::Role::Serializer
 );
@@ -24,7 +25,9 @@ our $VERSION = '0.01';
 sub info {
     my $self = shift;
     my $res = $self->http_get($self->uri);
-    return $res->is_success ? $self->decode_json($res->decoded_content) : undef;
+    return $res->is_success
+        ? $self->decode_json($res->decoded_content)
+        : undef;
 }
 
 sub version {
@@ -43,7 +46,8 @@ sub all_dbs {
 
     my $res = $self->http_get($self->uri_for('_all_dbs'));
     return unless $res->is_success;
-    return map { $self->db($_) } @{ $self->decode_json($res->decoded_content) };
+    return map { $self->db($_) }
+        @{ $self->decode_json($res->decoded_content) };
 }
 
 sub replicate {

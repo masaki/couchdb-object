@@ -40,7 +40,7 @@ END { $db->drop if defined $db }
 }
 
 { # all_docs with counts (11 tests)
-    my $docs = $db->all_docs({ count => 5 });
+    my $docs = $db->all_docs({ limit => 5 });
     is $docs->count => 5;
 
     while (my $doc = $docs->next) { # 5 times x 2 tests = 10

@@ -27,7 +27,7 @@ has '__fields' => (
 sub BUILDARGS {
     my $class = shift;
 
-    my $params = ref $_[0] eq 'HASH' ? shift : { @_ };
+    my $params = blessed $_[0] ? shift->to_hash : ref $_[0] eq 'HASH' ? shift : { @_ };
 
     my $args = {};
     for my $key (qw(id rev)) {
@@ -51,7 +51,7 @@ sub to_hash {
 
 sub to_json {
     my $self = shift;
-    return $self->serialize($self->to_hash);
+    return $self->encode_json($self->to_hash);
 }
 
 our $AUTOLOAD;

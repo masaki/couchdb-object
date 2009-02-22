@@ -1,15 +1,18 @@
 package CouchDB::Object::Database;
 
 use Mouse;
-use List::MoreUtils ();
+use MouseX::Types::URI;
+use List::MoreUtils qw(each_array);
 use CouchDB::Object;
 use CouchDB::Object::Document;
 use CouchDB::Object::Iterator;
+use namespace::clean -except => ['meta'];
+
+with 'CouchDB::Object::Role::UriFor';
 
 has 'couch' => (
     is       => 'rw',
     isa      => 'CouchDB::Object',
-    weak_ref => 1,
     required => 1,
     handles  => [qw(
         http_get http_post http_put http_delete
@@ -23,12 +26,18 @@ has 'name' => (
     required => 1,
 );
 
-sub uri {
+has 'uri' => (
+    is     => 'rw',
+    isa    => 'URI',
+    coerce => 1,
+);
+
+sub BUILD {
     my $self = shift;
 
     my $uri = $self->couch->uri->clone;
     $uri->path($uri->path . $self->name . '/');
-    $uri->canonical;
+    $self->uri($uri->canonical);
 }
 
 # database
@@ -40,7 +49,9 @@ sub create {
 sub info {
     my $self = shift;
     my $res = $self->http_get($self->uri);
-    return $res->is_success ? $self->decode_json($res->decoded_content) : undef;
+    return $res->is_success
+        ? $self->decode_json($res->decoded_content)
+        : undef;
 }
 
 sub drop {
@@ -54,12 +65,13 @@ sub compact {
 
 # document
 sub open_doc {
-    my ($self, $doc, $args) = @_;
+    my ($self, $id, $args) = @_;
 
-    my $id = blessed $doc ? $doc->id : $doc;
     my $res = $self->http_get($self->uri_for($id, $args || {}));
     return unless $res->is_success;
-    return CouchDB::Object::Document->new($self->decode_json($res->decoded_content));
+
+    my $doc = $self->decode_json($res->decoded_content);
+    return CouchDB::Object::Document->new($doc);
 }
 
 sub save_doc {
@@ -67,8 +79,8 @@ sub save_doc {
 
     my $res;
     if ($doc->has_id) {
-        my $query = $args || {};
-        $res = $self->http_put($self->uri_for($doc->id, $query), $doc->to_json);
+        my $uri = $self->uri_for($doc->id, $args || {});
+        $res = $self->http_put($uri, $doc->to_json);
     }
     else {
         $res = $self->http_post($self->uri, $doc->to_json);
@@ -80,6 +92,7 @@ sub save_doc {
     my $content = $self->decode_json($res->decoded_content);
     $doc->id($content->id)   if defined $content->id;
     $doc->rev($content->rev) if defined $content->rev;
+
     return $doc;
 }
 
@@ -89,7 +102,8 @@ sub remove_doc {
     return unless $doc->has_id and $doc->has_rev;
 
     my $query = { %{ $args || {} }, rev => $doc->rev };
-    return $self->http_delete($self->uri_for($doc->id, $query))->is_success;
+    my $uri = $self->uri_for($doc->id, $query);
+    return $self->http_delete($uri)->is_success;
 }
 
 # documents
@@ -97,7 +111,7 @@ sub all_docs {
     my ($self, $args) = @_;
 
     my $query = $args || {};
-    # TODO: filer_query
+    # TODO: filter_query
     my $res = $self->http_get($self->uri_for('_all_docs', $query));
     return unless $res->is_success;
 
@@ -106,24 +120,25 @@ sub all_docs {
 }
 
 sub bulk_docs {
-    my ($self, $docs) = @_;
+    my $self = shift;
+    my @docs = ref $_[0] eq 'ARRAY' ? @{$_[0]} : @_;
 
-    my $body = { docs => [ map { $_->to_hash } @$docs ] };
-    my $res = $self->http_post($self->uri_for('_bulk_docs'), $self->encode_json($body));
+    my $body = $self->encode_json({ docs => [ map { $_->to_hash } @docs ] });
+    my $res = $self->http_post($self->uri_for('_bulk_docs'), $body);
     return unless $res->is_success;
 
     # merge
     my $contents = $self->decode_json($res->decoded_content);
     my @new_revs = @{ $contents->new_revs };
-    if (@$docs == @new_revs) {
-        my $ea = List::MoreUtils::each_array(@$docs, @new_revs);
+    if (@docs == @new_revs) {
+        my $ea = each_array(@docs, @new_revs);
         while (my ($doc, $new) = $ea->()) {
-            $doc->id($new->id)   if defined $new->id;
-            $doc->rev($new->rev) if defined $new->rev;
+            $doc->id($new->{id})   if exists $new->{id};
+            $doc->rev($new->{rev}) if exists $new->{rev};
         }
     }
 
-    return $docs;
+    return wantarray ? @docs : \@docs;
 }
 
 sub query {

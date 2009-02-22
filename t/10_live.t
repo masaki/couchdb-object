@@ -15,7 +15,7 @@ else {
 my $couch = CouchDB::Object->new(uri => $ENV{TEST_COUCHDB});
 # relax with couchdb
 ok $couch;
-ok $couch->info;
+ok $couch->version >= 0.8;
 
 my $dbname = String::Random->new->randregex("[a-z]{20}");
 my $db = $couch->db($dbname);
@@ -37,22 +37,18 @@ is $doc->content => "foo";
 
 # update document
 $doc->content("bar");
-{
-    my $id  = $doc->id;
-    my $rev = $doc->rev;
-    ok $db->save_doc($doc); # 200
-    is   $doc->id  => $id;
-    isnt $doc->rev => $rev;
-}
+my $old_id  = $doc->id;
+my $old_rev = $doc->rev;
+ok $db->save_doc($doc); # 200
+is   $doc->id  => $old_id;
+isnt $doc->rev => $old_rev;
 
 # open document
-{
-    my $open = $db->open_doc($doc->id);
-    ok $open;
-    is $open->id      => $doc->id;
-    is $open->rev     => $doc->rev;
-    is $open->content => $doc->content;
-}
+my $open_doc = $db->open_doc($doc->id);
+ok $open_doc;
+is $open_doc->id      => $doc->id;
+is $open_doc->rev     => $doc->rev;
+is $open_doc->content => $doc->content;
 
 # remove document
 ok $db->remove_doc($doc);    # 200
