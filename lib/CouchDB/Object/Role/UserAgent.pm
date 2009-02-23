@@ -24,14 +24,20 @@ sub http_put    { shift->http_request(PUT    => @_) }
 sub http_delete { shift->http_request(DELETE => @_) }
 
 sub http_request {
-    my ($self, $method, $uri, $body) = @_;
+    my ($self, $method, $uri, %args) = @_;
 
-    my $req = HTTP::Request->new(uc $method, $uri, [ Accept => 'application/json' ]);
+    my $req = HTTP::Request->new(uc $method, $uri);
 
-    if (defined $body and length $body > 0) {
+    if (exists $args{Content}) {
+        my $body = delete $args{Content};
         $req->header('Content-Type' => 'application/json');
         $req->header('Content-Length' => length $body);
         $req->content($body);
+    }
+
+    $req->header('Accept' => 'application/json');
+    while (my ($name, $value) = each %args) {
+        $req->header($name => $value);
     }
 
     return $self->ua->request($req);

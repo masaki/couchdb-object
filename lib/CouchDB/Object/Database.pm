@@ -80,10 +80,10 @@ sub save_doc {
     my $res;
     if ($doc->has_id) {
         my $uri = $self->uri_for($doc->id, $args || {});
-        $res = $self->http_put($uri, $doc->to_json);
+        $res = $self->http_put($uri, Content => $doc->to_json);
     }
     else {
-        $res = $self->http_post($self->uri, $doc->to_json);
+        $res = $self->http_post($self->uri, Content => $doc->to_json);
     }
 
     return unless $res->is_success;
@@ -124,7 +124,7 @@ sub bulk_docs {
     my @docs = ref $_[0] eq 'ARRAY' ? @{$_[0]} : @_;
 
     my $body = $self->encode_json({ docs => [ map { $_->to_hash } @docs ] });
-    my $res = $self->http_post($self->uri_for('_bulk_docs'), $body);
+    my $res = $self->http_post($self->uri_for('_bulk_docs'), Content => $body);
     return unless $res->is_success;
 
     # merge
