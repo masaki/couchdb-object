@@ -2,11 +2,9 @@ package CouchDB::Object::Database;
 
 use Mouse;
 use MouseX::Types::URI;
-use List::MoreUtils qw(each_array);
 use CouchDB::Object;
 use CouchDB::Object::Document;
 use CouchDB::Object::Iterator;
-use namespace::clean -except => ['meta'];
 
 with 'CouchDB::Object::Role::UriFor';
 
@@ -129,12 +127,17 @@ sub bulk_docs {
 
     # merge
     my $contents = $self->decode_json($res->decoded_content);
-    my @new_revs = @{ $contents->new_revs };
+    my @new_revs = eval { @{ $contents->new_revs } };
     if (@docs == @new_revs) {
-        my $ea = each_array(@docs, @new_revs);
-        while (my ($doc, $new) = $ea->()) {
-            $doc->id($new->{id})   if exists $new->{id};
-            $doc->rev($new->{rev}) if exists $new->{rev};
+        for my $doc (@docs) {
+            my $new_doc = shift @new_revs;
+
+            if (!$doc->has_id and exists $new_doc->{id}) {
+                $doc->id($new_doc->{id});
+            }
+            if (!$doc->has_rev and exists $new_doc->{rev}) {
+                $doc->rev($new_doc->{rev});
+            }
         }
     }
 
