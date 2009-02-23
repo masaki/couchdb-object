@@ -1,23 +1,22 @@
 package CouchDB::Object::Role::UriFor;
 
 use Mouse::Role;
-use URI::Escape qw(uri_escape_utf8);
-use namespace::clean -except => ['meta'];
-
-# requires_attr 'uri';
+use URI::Escape ();
 
 sub uri_for {
     my ($self, @args) = @_;
-    return unless $self->meta->has_attribute('uri');
-
-    my $params = (scalar @args and ref $args[$#args] eq 'HASH') ? pop @args : {};
-
-    my $path = join '/', map { uri_escape_utf8($_) } map { split m!/! } @args;
+    return unless $self->can('uri');
 
     my $uri = $self->uri->clone;
-    $uri->path($uri->path . $path);
+
+    my $params = (scalar @args and ref $args[$#args] eq 'HASH') ? pop @args : {};
     $uri->query_form($params);
-    $uri->canonical;
+
+    my @path = ($uri->path_segments, map { split m!/! } @args);
+    my $path = join '/', map { URI::Escape::uri_escape_utf8($_) } @path;
+    $uri->path($path);
+
+    return $uri->canonical;
 }
 
 no Mouse::Role; 1;
