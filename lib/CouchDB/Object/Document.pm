@@ -31,19 +31,32 @@ has '__fields' => (
 );
 
 sub BUILDARGS {
-    my $class = shift;
+    my ($self, %args) = @_;
+    return {} unless keys %args;
 
-    my $params = blessed $_[0] ? shift->to_hash : ref $_[0] eq 'HASH' ? shift : { @_ };
-
-    my $args = {};
-    for my $key (qw(id rev deleted)) {
-        if (exists $params->{"_${key}"}) {
-            $args->{$key} = delete $params->{"_${key}"};
-        }
+    my $fields = {};
+    for my $name (keys %args) {
+        next if $self->meta->has_attribute($name);
+        $fields->{$name} = delete $args{$name};
     }
-    $args->{__fields} = Data::OpenStruct::Deep->new($params);
 
-    return $args;
+    $args{__fields} = Data::OpenStruct::Deep->new($fields);
+
+    return \%args;
+}
+
+sub from_hash {
+    my ($class, $args) = @_;
+
+    my $hash = (blessed $args ? $args->to_hash : $args) || {};
+    my $self = $class->new;
+
+    while (my ($key, $value) = each %$hash) {
+        $key =~ s/^_//;
+        $self->$key($value);
+    }
+
+    return $self;
 }
 
 sub to_hash {

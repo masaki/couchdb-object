@@ -28,7 +28,7 @@ my $tester = sub {
 };
 
 { # read from hashref
-    my $doc = CouchDB::Object::Document->new({
+    my $doc = CouchDB::Object::Document->from_hash({
         _id    => "foo",
         _rev   => "foo",
         title  => "foo",

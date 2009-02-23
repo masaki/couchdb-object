@@ -20,7 +20,7 @@ $db->create;
 END { $db->drop if defined $db }
 
 # create with bulk_docs
-my @docs = map { CouchDB::Object::Document->new({ num => $_ }) } (0..14);
+my @docs = map { CouchDB::Object::Document->new(num => $_) } (0..14);
 ok $db->bulk_docs(\@docs), 'ok create bulk_docs';
 for my $doc (@docs) {
     ok $doc->has_id;

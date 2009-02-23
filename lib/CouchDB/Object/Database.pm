@@ -71,7 +71,7 @@ sub open_doc {
     return unless $res->is_success;
 
     my $doc = $self->decode_json($res->decoded_content);
-    return CouchDB::Object::Document->new($doc);
+    return CouchDB::Object::Document->from_hash($doc);
 }
 
 sub save_doc {
@@ -127,7 +127,7 @@ sub all_docs {
         my $doc;
 
         if (my $inc = $row->{doc}) {
-            $doc = CouchDB::Object::Document->new($inc);
+            $doc = CouchDB::Object::Document->from_hash($inc);
         }
         else {
             $doc = CouchDB::Object::Document->new;
