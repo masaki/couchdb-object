@@ -2,6 +2,7 @@ package CouchDB::Object::Database;
 
 use Mouse;
 use MouseX::Types::URI;
+use URI::Escape ();
 use CouchDB::Object;
 use CouchDB::Object::Document;
 use CouchDB::Object::Iterator;
@@ -22,6 +23,15 @@ has 'name' => (
     is       => 'rw',
     isa      => 'Str',
     required => 1,
+    trigger  => sub {
+        my ($self, $name) = @_;
+        my $uri = $self->couch->uri->clone;
+
+        my @path = ($uri->path_segments, URI::Escape::uri_escape_utf8($name), '');
+        $uri->path_segments(@path);
+
+        $self->uri($uri->canonical);
+    },
 );
 
 has 'uri' => (
@@ -29,14 +39,6 @@ has 'uri' => (
     isa    => 'URI',
     coerce => 1,
 );
-
-sub BUILD {
-    my $self = shift;
-
-    my $uri = $self->couch->uri->clone;
-    $uri->path($uri->path . $self->name . '/');
-    $self->uri($uri->canonical);
-}
 
 # database
 sub create {
