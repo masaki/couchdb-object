@@ -1,4 +1,4 @@
-package CouchDB::Object::Iterator;
+package CouchDB::Object::DocumentSet;
 
 use Mouse;
 use Array::Iterator;
@@ -12,40 +12,21 @@ has 'rows' => (
     trigger    => sub { shift->reset },
 );
 
+has 'total_rows' => (
+    is  => 'rw',
+    isa => 'Int',
+);
+
+has 'offset' => (
+    is  => 'rw',
+    isa => 'Int',
+);
+
 has 'iterator' => (
     is      => 'rw',
     isa     => 'Array::Iterator',
     handles => { next => 'getNext' },
 );
-
-sub BUILDARGS {
-    my ($class, $rows) = @_;
-
-    my @docs;
-    for my $row (@$rows) {
-        my $value = $row->{value} || {};
-
-        my $id = $row->{id};
-        if (exists $value->{_id}) {
-            $id = delete $value->{_id};
-        }
-
-        my $rev;
-        if (exists $value->{rev}) {
-            $rev = delete $value->{rev};
-        }
-        elsif (exists $value->{_rev}) {
-            $rev = delete $value->{_rev};
-        }
-
-        my $doc = CouchDB::Object::Document->new($value);
-        $doc->id($id)   if defined $id;
-        $doc->rev($rev) if defined $rev;
-        push @docs, $doc;
-    }
-
-    return { rows => \@docs };
-}
 
 sub count {
     my $self = shift;
@@ -71,13 +52,17 @@ CouchDB::Object::Iterator - Interface to CouchDB documents
 
 =head1 METHODS
 
+=head2 total_rows
+
+=head2 offset
+
+=head2 count
+
 =head2 all
 
 =head2 next
 
 =head2 reset
-
-=head2 count
 
 =head1 AUTHOR
 

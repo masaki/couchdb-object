@@ -17,6 +17,12 @@ has 'rev' => (
     predicate => 'has_rev',
 );
 
+has 'deleted' => (
+    is        => 'rw',
+    isa       => 'Bool',
+    default   => 0,
+);
+
 has '__fields' => (
     is      => 'rw',
     isa     => 'Data::OpenStruct::Deep',
@@ -30,9 +36,10 @@ sub BUILDARGS {
     my $params = blessed $_[0] ? shift->to_hash : ref $_[0] eq 'HASH' ? shift : { @_ };
 
     my $args = {};
-    for my $key (qw(id rev)) {
-        my $value = delete $params->{$key} || delete $params->{"_${key}"};
-        $args->{$key} = $value if defined $value;
+    for my $key (qw(id rev deleted)) {
+        if (exists $params->{"_${key}"}) {
+            $args->{$key} = delete $params->{"_${key}"};
+        }
     }
     $args->{__fields} = Data::OpenStruct::Deep->new($params);
 
@@ -45,6 +52,7 @@ sub to_hash {
     my $hash = $self->__fields->to_hash;
     $hash->{_id}  = $self->id  if $self->has_id;
     $hash->{_rev} = $self->rev if $self->has_rev;
+    $hash->{_deleted} = \1 if $self->deleted;
 
     return $hash;
 }

@@ -9,22 +9,22 @@ my $tester = sub {
     my $doc = shift;
 
     ok $doc->has_id;
-    is $doc->id => "foo";
+    is $doc->id => "foo", 'id ok';
 
     ok $doc->has_rev;
-    is $doc->rev => "foo";
+    is $doc->rev => "foo", 'rev ok';
 
-    is $doc->title => "foo";
+    is $doc->title => "foo", 'title ok';
 
-    cmp_deeply $doc->author => { name => "foo" };
-    is $doc->author->name => "foo";
+    cmp_deeply $doc->author => { name => "foo" }, 'author ok';
+    is $doc->author->name => "foo", 'author->name ok';
 
     cmp_deeply $doc->to_hash => {
         _id    => "foo",
         _rev   => "foo",
         title  => "foo",
         author => { name => "foo" },
-    };
+    }, 'to_hash ok';
 };
 
 { # read from hashref

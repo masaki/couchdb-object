@@ -5,7 +5,7 @@ use MouseX::Types::URI;
 use URI::Escape ();
 use CouchDB::Object;
 use CouchDB::Object::Document;
-use CouchDB::Object::Iterator;
+use CouchDB::Object::DocumentSet;
 
 with 'CouchDB::Object::Role::UriFor';
 
@@ -116,7 +116,33 @@ sub all_docs {
     return unless $res->is_success;
 
     my $content = $self->decode_json($res->decoded_content);
-    return CouchDB::Object::Iterator->new($content->rows);
+
+    my $docs = CouchDB::Object::DocumentSet->new(
+        total_rows => $content->total_rows,
+        offset     => $content->offset,
+    );
+
+    my @docs;
+    for my $row (@{ $content->rows }) {
+        my $doc;
+
+        if (my $inc = $row->{doc}) {
+            $doc = CouchDB::Object::Document->new($inc);
+        }
+        else {
+            $doc = CouchDB::Object::Document->new;
+            $doc->id($row->{id});
+
+            while (my ($key, $value) = each %{ $row->{value} }) {
+                $doc->$key($value);
+            }
+        }
+
+        push @docs, $doc;
+    }
+    $docs->rows(\@docs);
+
+    return $docs;
 }
 
 sub bulk_docs {
