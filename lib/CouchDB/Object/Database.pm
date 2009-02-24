@@ -116,7 +116,7 @@ sub all_docs {
     my $res = $self->http_get($self->uri_for('_all_docs', $query));
     return unless $res->is_success;
 
-    my $content = $self->decode_json($res->decoded_content);
+    my $content = $self->decode_json_to_object($res->decoded_content);
 
     my $docs = CouchDB::Object::DocumentSet->new(
         total_rows => $content->total_rows,
@@ -155,7 +155,7 @@ sub bulk_docs {
     return unless $res->is_success;
 
     # merge
-    my $contents = $self->decode_json($res->decoded_content);
+    my $contents = $self->decode_json_to_object($res->decoded_content);
     my @new_revs = eval { @{ $contents->new_revs } };
     if (@docs == @new_revs) {
         for my $doc (@docs) {

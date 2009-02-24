@@ -5,7 +5,7 @@ use CouchDB::Object;
 use CouchDB::Object::Document;
 
 plan skip_all => '$ENV{TEST_COUCHDB} required for network testing' unless $ENV{TEST_COUCHDB};
-plan 'no_plan';
+plan tests => 15;
 
 my $couch = CouchDB::Object->new(uri => $ENV{TEST_COUCHDB});
 my $dbname = String::Random->new->randregex("[a-z][0-9a-z]{19}");
