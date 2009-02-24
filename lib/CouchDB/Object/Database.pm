@@ -27,8 +27,10 @@ has 'name' => (
         my ($self, $name) = @_;
         my $uri = $self->couch->uri->clone;
 
-        my @path = ($uri->path_segments, URI::Escape::uri_escape_utf8($name), '');
-        $uri->path_segments(@path);
+        my $path = $uri->path;
+        $path =~ s!/$!!;
+        $path = "${path}/${name}/";
+        $uri->path($path);
 
         $self->uri($uri->canonical);
     },
