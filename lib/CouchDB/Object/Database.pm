@@ -90,7 +90,7 @@ sub save_doc {
     return unless $res->is_success;
 
     # merge
-    my $content = $self->decode_json($res->decoded_content);
+    my $content = $self->decode_json_to_object($res->decoded_content);
     $doc->id($content->id)   if defined $content->id;
     $doc->rev($content->rev) if defined $content->rev;
 
