@@ -1,6 +1,5 @@
 # -*- mode: perl -*-
 use Test::Base;
-use Test::Data::Scalar;
 use String::Random ();
 use CouchDB::Object;
 

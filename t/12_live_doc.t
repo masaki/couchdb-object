@@ -1,33 +1,17 @@
 # -*- mode: perl -*-
 use Test::Base;
-use Test::Deep;
 use String::Random ();
 use CouchDB::Object;
 use CouchDB::Object::Document;
 
-unless ($ENV{TEST_COUCHDB}) {
-    plan skip_all => '$ENV{TEST_COUCHDB} required for network testing';
-}
-else {
-    plan tests => 22;
-}
+plan skip_all => '$ENV{TEST_COUCHDB} required for network testing' unless $ENV{TEST_COUCHDB};
+plan 'no_plan';
 
 my $couch = CouchDB::Object->new(uri => $ENV{TEST_COUCHDB});
-# relax with couchdb
-ok $couch;
-ok $couch->version >= 0.8;
-
-my $dbname = String::Random->new->randregex("[a-z]{20}");
+my $dbname = String::Random->new->randregex("[a-z][0-9a-z]{19}");
 my $db = $couch->db($dbname);
-END { $db->drop if defined $db }
 
-# create database
-ok $db;
-ok !$db->info;  # 404
-ok $db->create; # 201
-ok $db->info;   # 200
-
-# save document
+# createdocument
 my $doc = CouchDB::Object::Document->new;
 $doc->content("foo");
 ok $db->save_doc($doc); # 201
@@ -55,6 +39,5 @@ ok $db->remove_doc($doc);    # 200
 ok !$db->remove_doc($doc);   # 404
 ok !$db->open_doc($doc->id); # 404
 
-# drop database
-ok $db->drop;   # 200
-ok !$db->info;  # 404
+# teadown
+END { $db->drop if defined $db }
