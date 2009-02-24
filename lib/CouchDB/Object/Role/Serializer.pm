@@ -20,13 +20,19 @@ sub encode_json {
 
 sub decode_json {
     my ($self, $json) = @_;
+    return $self->serializer->decode($json);
+}
 
-    my $data = $self->serializer->decode($json);
-    if (ref $data eq 'HASH') {
-        $data = Data::OpenStruct::Deep->new($data);
+sub decode_json_to_object {
+    my ($self, $json) = @_;
+
+    my $hash = $self->decode_json($json);
+    my $args = {};
+    while (my ($key, $value) = each %$hash) {
+        $args->{$key} = JSON::is_bool($value) ? $value + 0 : $value;
     }
 
-    return $data;
+    return Data::OpenStruct::Deep->new($args);
 }
 
 no Mouse::Role; 1;

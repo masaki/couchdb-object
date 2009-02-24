@@ -13,18 +13,11 @@ my $couch = CouchDB::Object->new(uri => $base_uri);
 ok $couch;
 is $couch->uri => $base_uri;
 ok $couch->info;
-ok $couch->version;
+like $couch->version => qr/^[\d\.]+$/;
 
-SKIP: {
-    my ($major, $minor, $teeny) = split /\./, $couch->version;
-    skip 'required over 0.8.0', 4
-        unless $major > 0 or ($major == 0 and $minor >= 8);
-
-    my $dbname = String::Random->new->randregex("[0-9a-z]{20}");
-
-    my $db = $couch->db($dbname);
-    ok $db;
-    isa_ok $db => 'CouchDB::Object::Database';
-    is $db->name => $dbname;
-    is $db->uri => "${base_uri}${dbname}/";
-}
+my $dbname = String::Random->new->randregex("[a-z][0-9a-z]{19}");
+my $db = $couch->db($dbname);
+ok $db;
+isa_ok $db => 'CouchDB::Object::Database';
+is $db->name => $dbname;
+is $db->uri => "${base_uri}${dbname}/";

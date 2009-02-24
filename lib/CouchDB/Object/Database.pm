@@ -2,7 +2,6 @@ package CouchDB::Object::Database;
 
 use Mouse;
 use MouseX::Types::URI;
-use URI::Escape ();
 use CouchDB::Object;
 use CouchDB::Object::Document;
 use CouchDB::Object::DocumentSet;
@@ -15,7 +14,7 @@ has 'couch' => (
     required => 1,
     handles  => [qw(
         http_get http_post http_put http_delete
-        decode_json encode_json
+        encode_json decode_json decode_json_to_object
     )],
 );
 
@@ -52,7 +51,7 @@ sub info {
     my $self = shift;
     my $res = $self->http_get($self->uri);
     return $res->is_success
-        ? $self->decode_json($res->decoded_content)
+        ? $self->decode_json_to_object($res->decoded_content)
         : undef;
 }
 

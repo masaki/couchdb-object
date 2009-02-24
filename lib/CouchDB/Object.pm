@@ -26,14 +26,14 @@ sub info {
     my $self = shift;
     my $res = $self->http_get($self->uri);
     return $res->is_success
-        ? $self->decode_json($res->decoded_content)
+        ? $self->decode_json_to_object($res->decoded_content)
         : undef;
 }
 
 sub version {
     my $self = shift;
     return unless my $info = $self->info;
-    return [ $info->version =~ /^(\d\.)+/ ]->[0];
+    return [ $info->version =~ /^([\d\.]+)/ ]->[0];
 }
 
 sub db {
